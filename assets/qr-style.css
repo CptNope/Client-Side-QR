@@ -1,0 +1,231 @@
+.csqr-container {
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 24px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    text-align: center;
+    border: 1px solid #eaeaea;
+}
+
+.csqr-title {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.25rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.csqr-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+/* NEW V3 TABS */
+.csqr-data-type-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.csqr-tab {
+    flex: 1 1 auto;
+    text-align: center;
+    padding: 10px 14px;
+    background: #f8f9f9;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #50575e;
+    transition: all 0.2s;
+    user-select: none;
+    font-size: 0.9em;
+    border: 1px solid #c3c4c7;
+}
+
+.csqr-tab:hover {
+    background: #f0f0f1;
+}
+
+.csqr-tab.active {
+    background: #007cba;
+    color: #fff;
+    border-color: #007cba;
+}
+
+.csqr-tab input[type="radio"] {
+    display: none;
+}
+
+.csqr-fields-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.csqr-url-fields { display: flex; }
+
+.csqr-utm-builder {
+    text-align: left;
+    background: #f8f9f9;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #e2e4e7;
+    font-size: 0.9em;
+}
+
+.csqr-utm-builder summary {
+    cursor: pointer;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #007cba;
+}
+
+.csqr-utm-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.csqr-wifi-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.csqr-input, textarea.csqr-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+}
+
+textarea.csqr-input {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.csqr-input:focus {
+    border-color: #007cba;
+    outline: none;
+    box-shadow: 0 0 0 1px #007cba;
+}
+
+.csqr-user-settings {
+    background: #f8f9f9;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #e2e4e7;
+    text-align: left;
+    font-size: 0.9rem;
+    color: #3c434a;
+}
+
+.csqr-setting-row {
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.csqr-setting-row:last-child {
+    margin-bottom: 0;
+}
+
+.csqr-setting-row label {
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.csqr-setting-row input[type="color"] {
+    width: 40px;
+    height: 30px;
+    padding: 2px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.csqr-size-input {
+    width: 100%;
+}
+
+.csqr-correct-level {
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.csqr-output-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding-top: 20px;
+    border-top: 1px solid #eaeaea;
+}
+
+.csqr-downloads {
+    width: 100%;
+}
+
+.csqr-qrcode {
+    background: white;
+    padding: 10px;
+    border: 1px solid #eaeaea;
+    border-radius: 8px;
+    display: inline-block;
+}
+
+.csqr-qrcode img, .csqr-qrcode canvas, .csqr-qrcode svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.csqr-download-png-btn, .csqr-download-svg-btn, .csqr-copy-btn {
+    flex: 1;
+    padding: 10px;
+    background-color: #f0f0f1;
+    color: #2c3338;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.csqr-download-png-btn:hover, .csqr-download-svg-btn:hover, .csqr-copy-btn:hover {
+    background-color: #e6e6e6;
+    border-color: #2c3338;
+}
+
+.csqr-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+.csqr-half-row > * {
+    flex: 1;
+}
+
+@media (max-width: 400px) {
+    .csqr-row {
+        flex-direction: column;
+    }
+}
