@@ -2,7 +2,7 @@
 
 Client-Side QR Code Generator is a WordPress plugin for creating privacy-friendly QR experiences directly in the browser. It supports a Gutenberg block and shortcode, keeps QR rendering on the client side, and gives site owners flexible controls for links, campaigns, contact sharing, WiFi access, and payment flows.
 
-Version: `4.1.2`
+Version: `4.1.3`
 
 ## Why this plugin
 
@@ -196,6 +196,7 @@ Recommended filenames:
 - `screenshot-1.png`
 - `screenshot-2.png`
 - `screenshot-3.png`
+- `screenshot-4.png`
 
 ## Third-party library attribution
 

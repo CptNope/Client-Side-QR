@@ -2,6 +2,14 @@
 
 All notable changes to the Client-Side QR Code Generator will be documented in this file.
 
+## [4.1.3] - Screenshot And Packaging Alignment
+### Added
+- Fourth WordPress.org screenshot for the shortcode builder workflow.
+
+### Changed
+- Updated plugin version metadata to `4.1.3`.
+- Aligned release docs and screenshot references with the current admin feature set.
+
 ## [4.1.2] - Classic Workflow And Optional Release Notices
 ### Added
 - Classic-editor shortcode builder screen with generated shortcode output and preview support.

@@ -4,7 +4,7 @@ Tags: qr code, qr generator, marketing, shortcode, block
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 4.1.2
+Stable tag: 4.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -69,8 +69,14 @@ Yes. The plugin now includes a shortcode builder in `Settings > QR Shortcode Bui
 1. Frontend QR generator with accessible payload tabs and exports
 2. Gutenberg block controls for design and payload defaults
 3. Lightweight settings page for site-wide defaults
+4. Shortcode builder for classic-editor workflows
 
 == Changelog ==
+
+= 4.1.3 =
+
+- Added a fourth WordPress.org screenshot for the shortcode builder workflow.
+- Refined release packaging to keep screenshots and docs aligned with the current admin feature set.
 
 = 4.1.2 =
 
@@ -103,6 +109,10 @@ Yes. The plugin now includes a shortcode builder in `Settings > QR Shortcode Bui
 - Added per-block payload type toggles.
 
 == Upgrade Notice ==
+
+= 4.1.3 =
+
+This release aligns the WordPress.org screenshot set and docs with the shortcode builder added in 4.1.2.
 
 = 4.1.2 =
 

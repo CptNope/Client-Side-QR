@@ -346,6 +346,48 @@ def create_screenshot_settings(filename):
     image.save(OUTPUT_DIR / filename)
 
 
+def create_screenshot_shortcode_builder(filename):
+    width, height = 1280, 960
+    image = Image.new("RGBA", (width, height), "#eef1ef")
+    draw = ImageDraw.Draw(image)
+    title_font = load_font(34, bold=True)
+    body_font = load_font(18, bold=False)
+
+    draw.text((60, 48), "Classic-editor shortcode builder with preview support", fill=INK, font=title_font)
+    draw.text((60, 96), "Representative admin view for building shortcode output visually and previewing the frontend renderer.", fill="#52676e", font=body_font)
+
+    add_window_chrome(draw, (50, 150, 1230, 910), "Settings > QR Shortcode Builder", "Classic-editor workflow")
+
+    rounded_rect(draw, (90, 225, 660, 860), 22, WHITE, outline="#dce3e3", width=2)
+    draw.text((122, 260), "QR Shortcode Builder", fill=INK, font=load_font(30, bold=True))
+    draw.text((122, 304), "Configure shortcode attributes and copy the generated shortcode.", fill="#52676e", font=load_font(18))
+
+    input_row(draw, 122, 360, 200, "Foreground color 1", "#111111")
+    input_row(draw, 350, 360, 200, "Background color", "#ffffff")
+    input_row(draw, 122, 444, 120, "Size", "256")
+    input_row(draw, 270, 444, 160, "Error correction", "High (30%)")
+    input_row(draw, 122, 528, 428, "Logo URL", "https://example.com/logo.png")
+
+    draw.text((122, 620), "Enabled payload types", fill=INK, font=load_font(22, bold=True))
+    x, y = 122, 660
+    for label in ["URL / Text", "WiFi", "Email", "vCard", "PayPal"]:
+        width_chip = chip(draw, x, y, label, active=True)
+        x += width_chip + 12
+
+    rounded_rect(draw, (122, 742, 332, 798), 18, TEAL)
+    draw.text((157, 759), "Generate Shortcode", fill=WHITE, font=load_font(21, bold=True))
+
+    rounded_rect(draw, (710, 225, 1190, 340), 22, WHITE, outline="#dce3e3", width=2)
+    draw.text((740, 258), "Generated shortcode", fill=INK, font=load_font(24, bold=True))
+    draw.text((740, 302), '[client_side_qr qrGradient="true" qrSize="256"]', fill="#52676e", font=load_font(18))
+
+    rounded_rect(draw, (710, 375, 1190, 860), 22, WHITE, outline="#dce3e3", width=2)
+    draw.text((740, 410), "Preview", fill=INK, font=load_font(24, bold=True))
+    draw_qr_card(draw, 820, 500, 250)
+
+    image.save(OUTPUT_DIR / filename)
+
+
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     SOURCE_DIR.mkdir(parents=True, exist_ok=True)
@@ -357,6 +399,7 @@ def main():
     create_screenshot_frontend("screenshot-1.png")
     create_screenshot_editor("screenshot-2.png")
     create_screenshot_settings("screenshot-3.png")
+    create_screenshot_shortcode_builder("screenshot-4.png")
 
     print("Generated WordPress.org banner, icon, and screenshot assets.")
 
