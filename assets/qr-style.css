@@ -11,14 +11,14 @@
 }
 
 .csqr-container {
-    --csqr-surface: var(--wp--preset--color--base, #ffffff);
-    --csqr-surface-alt: rgba(127, 127, 127, 0.08);
-    --csqr-surface-hover: rgba(127, 127, 127, 0.14);
-    --csqr-border: rgba(29, 35, 39, 0.18);
-    --csqr-border-strong: rgba(29, 35, 39, 0.35);
-    --csqr-text: var(--wp--preset--color--contrast, inherit);
-    --csqr-muted: rgba(29, 35, 39, 0.72);
-    --csqr-accent: var(--wp--preset--color--primary, #007cba);
+    --csqr-surface: var(--csqr-ui-surface, transparent);
+    --csqr-text: var(--csqr-ui-text, inherit);
+    --csqr-accent: var(--csqr-ui-accent, var(--wp--preset--color--primary, currentColor));
+    --csqr-surface-alt: rgba(127, 127, 127, 0.12);
+    --csqr-surface-hover: rgba(127, 127, 127, 0.18);
+    --csqr-border: rgba(127, 127, 127, 0.28);
+    --csqr-border-strong: rgba(127, 127, 127, 0.42);
+    --csqr-muted: currentColor;
     max-width: 480px;
     margin: 20px auto;
     padding: 24px;
@@ -26,8 +26,28 @@
     border: 1px solid var(--csqr-border);
     border-radius: 14px;
     box-shadow: 0 10px 28px rgba(29, 35, 39, 0.08);
-    font-family: inherit;
+    font-family: var(--csqr-ui-font, inherit);
     color: var(--csqr-text);
+}
+
+@supports (background: color-mix(in srgb, black 50%, white)) {
+    .csqr-container {
+        --csqr-surface-alt: color-mix(in srgb, var(--csqr-text) 8%, transparent);
+        --csqr-surface-hover: color-mix(in srgb, var(--csqr-text) 12%, transparent);
+        --csqr-border: color-mix(in srgb, var(--csqr-text) 18%, transparent);
+        --csqr-border-strong: color-mix(in srgb, var(--csqr-text) 32%, transparent);
+        box-shadow: 0 10px 28px color-mix(in srgb, var(--csqr-text) 10%, transparent);
+    }
+}
+
+.csqr-block-preview {
+    padding: 24px;
+    border: 1px solid var(--csqr-border);
+    border-radius: 8px;
+    background: var(--csqr-surface);
+    color: var(--csqr-text);
+    font-family: var(--csqr-ui-font, inherit);
+    text-align: center;
 }
 
 .csqr-header {
@@ -43,6 +63,7 @@
 .csqr-description {
     margin: 0;
     color: var(--csqr-muted);
+    opacity: 0.78;
     font-size: 0.95rem;
 }
 
@@ -254,6 +275,7 @@ textarea.csqr-input {
 .csqr-status {
     margin: 0;
     color: var(--csqr-muted);
+    opacity: 0.78;
     font-size: 0.9rem;
     text-align: center;
 }

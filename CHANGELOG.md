@@ -2,6 +2,19 @@
 
 All notable changes to the Client-Side QR Code Generator will be documented in this file.
 
+## [4.1.4] - Theme Override And Editor Reliability Fixes
+### Added
+- New interface-shell controls for theme color inheritance, theme font inheritance, and optional per-instance shell overrides in both the block editor and shortcode builder.
+- New global defaults for shell background, text, accent, and font overrides when theme inheritance is not the right fit.
+
+### Fixed
+- Restored reliable block selection in the Gutenberg editor by using a proper block wrapper.
+- Corrected frontend shell styling so dark themes are no longer forced into a light panel treatment by default.
+
+### Changed
+- Updated plugin version metadata to `4.1.4`.
+- Refined frontend shell CSS to inherit surrounding theme context first and only apply explicit UI colors when you opt into overrides.
+
 ## [4.1.3] - Screenshot And Packaging Alignment
 ### Added
 - Fourth WordPress.org screenshot for the shortcode builder workflow.

@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Client-Side QR Code Generator
  * Description:       Generate privacy-friendly QR codes in the browser with a Gutenberg block and shortcode for campaigns, contact sharing, payments, and QR-driven site workflows.
- * Version:           4.1.3
+ * Version:           4.1.4
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Jeremy Anderson
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CSQR_VERSION', '4.1.3' );
+define( 'CSQR_VERSION', '4.1.4' );
 define( 'CSQR_OPTION_NAME', 'csqr_settings' );
 define( 'CSQR_RELEASE_TRANSIENT', 'csqr_github_release_data' );
 define( 'CSQR_RELEASE_CRON_HOOK', 'csqr_check_github_release_event' );
@@ -42,6 +42,12 @@ function csqr_get_default_settings() {
 		'qrColorDark'       => '#111111',
 		'qrColorDark2'      => '#111111',
 		'qrColorLight'      => '#ffffff',
+		'uiUseThemeColors'  => true,
+		'uiUseThemeFont'    => true,
+		'uiSurfaceColor'    => '',
+		'uiTextColor'       => '',
+		'uiAccentColor'     => '',
+		'uiFontFamily'      => '',
 		'qrSize'            => 256,
 		'qrCorrectLevel'    => 'H',
 		'qrDotStyle'        => 'square',
@@ -119,6 +125,12 @@ function csqr_sanitize_settings( $settings ) {
 		'qrColorDark'           => csqr_sanitize_hex_color( $settings['qrColorDark'] ?? $defaults['qrColorDark'], $defaults['qrColorDark'] ),
 		'qrColorDark2'          => csqr_sanitize_hex_color( $settings['qrColorDark2'] ?? $defaults['qrColorDark2'], $defaults['qrColorDark2'] ),
 		'qrColorLight'          => csqr_sanitize_hex_color( $settings['qrColorLight'] ?? $defaults['qrColorLight'], $defaults['qrColorLight'] ),
+		'uiUseThemeColors'      => rest_sanitize_boolean( $settings['uiUseThemeColors'] ?? $defaults['uiUseThemeColors'] ),
+		'uiUseThemeFont'        => rest_sanitize_boolean( $settings['uiUseThemeFont'] ?? $defaults['uiUseThemeFont'] ),
+		'uiSurfaceColor'        => csqr_sanitize_hex_color( $settings['uiSurfaceColor'] ?? $defaults['uiSurfaceColor'], '', true ),
+		'uiTextColor'           => csqr_sanitize_hex_color( $settings['uiTextColor'] ?? $defaults['uiTextColor'], '', true ),
+		'uiAccentColor'         => csqr_sanitize_hex_color( $settings['uiAccentColor'] ?? $defaults['uiAccentColor'], '', true ),
+		'uiFontFamily'          => csqr_sanitize_font_family( $settings['uiFontFamily'] ?? $defaults['uiFontFamily'] ),
 		'qrSize'                => min( 800, max( 100, absint( $settings['qrSize'] ?? $defaults['qrSize'] ) ) ),
 		'qrCorrectLevel'        => in_array( $settings['qrCorrectLevel'] ?? '', $error_levels, true ) ? $settings['qrCorrectLevel'] : $defaults['qrCorrectLevel'],
 		'qrDotStyle'            => in_array( $settings['qrDotStyle'] ?? '', $dot_styles, true ) ? $settings['qrDotStyle'] : $defaults['qrDotStyle'],
@@ -149,6 +161,19 @@ function csqr_sanitize_settings( $settings ) {
 	}
 
 	return apply_filters( 'csqr_sanitized_settings', $sanitized, $settings );
+}
+
+/**
+ * Sanitize a font-family declaration used for optional UI overrides.
+ *
+ * @param mixed $value Raw font-family input.
+ * @return string
+ */
+function csqr_sanitize_font_family( $value ) {
+	$value = is_string( $value ) ? wp_strip_all_tags( $value ) : '';
+	$value = preg_replace( '/[^A-Za-z0-9,\-"\' _]/', '', $value );
+
+	return is_string( $value ) ? trim( $value ) : '';
 }
 
 /**
@@ -204,6 +229,12 @@ function csqr_sanitize_option_settings( $settings ) {
 	foreach ( csqr_get_payload_keys() as $payload_key ) {
 		if ( ! array_key_exists( $payload_key, $settings ) ) {
 			$settings[ $payload_key ] = false;
+		}
+	}
+
+	foreach ( array( 'uiUseThemeColors', 'uiUseThemeFont' ) as $boolean_key ) {
+		if ( ! array_key_exists( $boolean_key, $settings ) ) {
+			$settings[ $boolean_key ] = false;
 		}
 	}
 
@@ -426,6 +457,36 @@ function csqr_build_shortcode_from_settings( $settings ) {
 }
 
 /**
+ * Build inline CSS variables for the frontend container shell.
+ *
+ * @param array<string, mixed> $settings Instance settings.
+ * @return string
+ */
+function csqr_get_container_style_attribute( $settings ) {
+	$styles = array();
+
+	if ( empty( $settings['uiUseThemeColors'] ) ) {
+		if ( ! empty( $settings['uiSurfaceColor'] ) ) {
+			$styles[] = '--csqr-ui-surface:' . $settings['uiSurfaceColor'];
+		}
+
+		if ( ! empty( $settings['uiTextColor'] ) ) {
+			$styles[] = '--csqr-ui-text:' . $settings['uiTextColor'];
+		}
+
+		if ( ! empty( $settings['uiAccentColor'] ) ) {
+			$styles[] = '--csqr-ui-accent:' . $settings['uiAccentColor'];
+		}
+	}
+
+	if ( empty( $settings['uiUseThemeFont'] ) && ! empty( $settings['uiFontFamily'] ) ) {
+		$styles[] = '--csqr-ui-font:' . $settings['uiFontFamily'];
+	}
+
+	return implode( ';', $styles );
+}
+
+/**
  * Render a shortcode builder field row.
  *
  * @param string $name Field name.
@@ -466,7 +527,7 @@ function csqr_render_shortcode_builder_page() {
 			}
 		}
 
-		foreach ( array( 'qrGradient', 'allowUserColor', 'allowUserSize', 'allowUserCorrectLevel', 'enableUrl', 'enableWifi', 'enableEmail', 'enableSms', 'enableVcard', 'enableCrypto', 'enablePaypal' ) as $boolean_key ) {
+		foreach ( array( 'uiUseThemeColors', 'uiUseThemeFont', 'qrGradient', 'allowUserColor', 'allowUserSize', 'allowUserCorrectLevel', 'enableUrl', 'enableWifi', 'enableEmail', 'enableSms', 'enableVcard', 'enableCrypto', 'enablePaypal' ) as $boolean_key ) {
 			$raw_values[ $boolean_key ] = isset( $_POST[ $boolean_key ] );
 		}
 
@@ -483,6 +544,12 @@ function csqr_render_shortcode_builder_page() {
 			<table class="form-table" role="presentation">
 				<tbody>
 					<?php
+					csqr_render_builder_row( 'uiUseThemeColors', __( 'Inherit theme colors', 'csqr' ), '<label><input id="uiUseThemeColors" name="uiUseThemeColors" type="checkbox" value="1"' . checked( $values['uiUseThemeColors'], true, false ) . ' /> ' . esc_html__( 'Use the active theme colors for the interface shell', 'csqr' ) . '</label>' );
+					csqr_render_builder_row( 'uiUseThemeFont', __( 'Inherit theme font', 'csqr' ), '<label><input id="uiUseThemeFont" name="uiUseThemeFont" type="checkbox" value="1"' . checked( $values['uiUseThemeFont'], true, false ) . ' /> ' . esc_html__( 'Use the active theme font for the interface shell', 'csqr' ) . '</label>' );
+					csqr_render_builder_row( 'uiSurfaceColor', __( 'Shell background override', 'csqr' ), '<input id="uiSurfaceColor" name="uiSurfaceColor" type="text" class="regular-text" value="' . esc_attr( $values['uiSurfaceColor'] ) . '" />' );
+					csqr_render_builder_row( 'uiTextColor', __( 'Shell text override', 'csqr' ), '<input id="uiTextColor" name="uiTextColor" type="text" class="regular-text" value="' . esc_attr( $values['uiTextColor'] ) . '" />' );
+					csqr_render_builder_row( 'uiAccentColor', __( 'Shell accent override', 'csqr' ), '<input id="uiAccentColor" name="uiAccentColor" type="text" class="regular-text" value="' . esc_attr( $values['uiAccentColor'] ) . '" />' );
+					csqr_render_builder_row( 'uiFontFamily', __( 'Shell font override', 'csqr' ), '<input id="uiFontFamily" name="uiFontFamily" type="text" class="regular-text code" value="' . esc_attr( $values['uiFontFamily'] ) . '" />' );
 					csqr_render_builder_row( 'qrColorDark', __( 'Foreground color 1', 'csqr' ), '<input id="qrColorDark" name="qrColorDark" type="text" class="regular-text" value="' . esc_attr( $values['qrColorDark'] ) . '" />' );
 					csqr_render_builder_row( 'qrColorDark2', __( 'Foreground color 2', 'csqr' ), '<input id="qrColorDark2" name="qrColorDark2" type="text" class="regular-text" value="' . esc_attr( $values['qrColorDark2'] ) . '" />' );
 					csqr_render_builder_row( 'qrColorLight', __( 'Background color', 'csqr' ), '<input id="qrColorLight" name="qrColorLight" type="text" class="regular-text" value="' . esc_attr( $values['qrColorLight'] ) . '" />' );
@@ -536,6 +603,45 @@ function csqr_render_settings_page() {
 			<?php settings_fields( 'csqr_settings_group' ); ?>
 			<table class="form-table" role="presentation">
 				<tbody>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Frontend shell defaults', 'csqr' ); ?></th>
+						<td>
+							<fieldset>
+								<label>
+									<input type="checkbox" name="<?php echo esc_attr( CSQR_OPTION_NAME ); ?>[uiUseThemeColors]" value="1" <?php checked( $settings['uiUseThemeColors'] ); ?> />
+									<?php esc_html_e( 'Inherit theme colors by default', 'csqr' ); ?>
+								</label>
+								<br />
+								<label>
+									<input type="checkbox" name="<?php echo esc_attr( CSQR_OPTION_NAME ); ?>[uiUseThemeFont]" value="1" <?php checked( $settings['uiUseThemeFont'] ); ?> />
+									<?php esc_html_e( 'Inherit theme font by default', 'csqr' ); ?>
+								</label>
+							</fieldset>
+							<p class="description"><?php esc_html_e( 'These controls affect the surrounding generator interface for both the block and shortcode output. QR code colors stay separate below.', 'csqr' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="csqr-ui-surface-color"><?php esc_html_e( 'Shell background override', 'csqr' ); ?></label></th>
+						<td>
+							<input id="csqr-ui-surface-color" name="<?php echo esc_attr( CSQR_OPTION_NAME ); ?>[uiSurfaceColor]" type="text" value="<?php echo esc_attr( $settings['uiSurfaceColor'] ); ?>" class="regular-text" />
+							<p class="description"><?php esc_html_e( 'Optional. Used when theme color inheritance is disabled for an instance or as the saved fallback default.', 'csqr' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="csqr-ui-text-color"><?php esc_html_e( 'Shell text override', 'csqr' ); ?></label></th>
+						<td><input id="csqr-ui-text-color" name="<?php echo esc_attr( CSQR_OPTION_NAME ); ?>[uiTextColor]" type="text" value="<?php echo esc_attr( $settings['uiTextColor'] ); ?>" class="regular-text" /></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="csqr-ui-accent-color"><?php esc_html_e( 'Shell accent override', 'csqr' ); ?></label></th>
+						<td><input id="csqr-ui-accent-color" name="<?php echo esc_attr( CSQR_OPTION_NAME ); ?>[uiAccentColor]" type="text" value="<?php echo esc_attr( $settings['uiAccentColor'] ); ?>" class="regular-text" /></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="csqr-ui-font-family"><?php esc_html_e( 'Shell font override', 'csqr' ); ?></label></th>
+						<td>
+							<input id="csqr-ui-font-family" name="<?php echo esc_attr( CSQR_OPTION_NAME ); ?>[uiFontFamily]" type="text" value="<?php echo esc_attr( $settings['uiFontFamily'] ); ?>" class="regular-text code" />
+							<p class="description"><?php esc_html_e( 'Optional CSS font-family value for the interface when theme font inheritance is disabled.', 'csqr' ); ?></p>
+						</td>
+					</tr>
 					<tr>
 						<th scope="row"><label for="csqr-qr-size"><?php esc_html_e( 'Default QR size', 'csqr' ); ?></label></th>
 						<td>
@@ -745,6 +851,7 @@ function csqr_render_qr_generator( $attributes = array() ) {
 	$output_label_id  = $uid . '_output_label';
 	$size_input_id    = $uid . '_size';
 	$level_input_id   = $uid . '_error_level';
+	$container_style  = csqr_get_container_style_attribute( $settings );
 
 	wp_enqueue_script( 'csqr-script' );
 	wp_enqueue_style( 'csqr-style' );
@@ -763,6 +870,9 @@ function csqr_render_qr_generator( $attributes = array() ) {
 		data-eye-color="<?php echo esc_attr( $settings['qrEyeColor'] ); ?>"
 		data-gradient="<?php echo $settings['qrGradient'] ? 'true' : 'false'; ?>"
 		data-logo-url="<?php echo esc_url( $settings['logoUrl'] ); ?>"
+		<?php if ( '' !== $container_style ) : ?>
+			style="<?php echo esc_attr( $container_style ); ?>"
+		<?php endif; ?>
 	>
 		<div class="csqr-header">
 			<h3 id="<?php echo esc_attr( $title_id ); ?>" class="csqr-title"><?php esc_html_e( 'Generate QR Code', 'csqr' ); ?></h3>

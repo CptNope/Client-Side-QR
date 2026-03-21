@@ -2,7 +2,7 @@
 
 Client-Side QR Code Generator is a WordPress plugin for creating privacy-friendly QR experiences directly in the browser. It supports a Gutenberg block and shortcode, keeps QR rendering on the client side, and gives site owners flexible controls for links, campaigns, contact sharing, WiFi access, and payment flows.
 
-Version: `4.1.3`
+Version: `4.1.4`
 
 ## Why this plugin
 
@@ -46,6 +46,8 @@ Version: `4.1.3`
   - clipboard image copy where browser support is available
 - Lightweight global settings page for defaults
 - Classic-editor shortcode builder for admin-side shortcode configuration
+- Theme-aware interface shell that inherits site colors and fonts by default
+- Per-instance interface shell overrides in both the block editor and shortcode builder
 - Optional opt-in GitHub release notices for self-managed installs
 - Translation-ready strings with the `csqr` text domain
 
@@ -78,7 +80,8 @@ Version: `4.1.3`
 1. Open a post or page in the block editor.
 2. Insert the `Client-Side QR Code` block.
 3. Configure design defaults, payload types, and optional end-user controls.
-4. Publish the page.
+4. Use the `Interface Shell` panel if you want the block to inherit the active theme or force custom shell colors and font-family values for this instance.
+5. Publish the page.
 
 ### Shortcode
 
@@ -110,6 +113,8 @@ Gradient and logo example:
 
 If you are using the classic editor or a classic theme workflow, you can use the shortcode builder at `Settings > QR Shortcode Builder` to generate and preview shortcode output without hand-writing attributes.
 
+You can also control the surrounding interface shell separately from the QR itself by inheriting the active theme colors and font, or by supplying instance-level shell overrides when a page needs a specific surface, text, accent, or font treatment.
+
 ## Shortcode attributes
 
 The shortcode remains backward compatible with the existing attribute names.
@@ -119,6 +124,12 @@ The shortcode remains backward compatible with the existing attribute names.
 | `qrColorDark` | string | `#111111` | Primary foreground color |
 | `qrColorDark2` | string | `#111111` | Secondary foreground color when gradients are enabled |
 | `qrColorLight` | string | `#ffffff` | Background color |
+| `uiUseThemeColors` | bool | `true` | Inherit the surrounding theme colors for the interface shell |
+| `uiUseThemeFont` | bool | `true` | Inherit the surrounding theme font for the interface shell |
+| `uiSurfaceColor` | string | empty | Optional shell background override |
+| `uiTextColor` | string | empty | Optional shell text override |
+| `uiAccentColor` | string | empty | Optional shell accent override |
+| `uiFontFamily` | string | empty | Optional shell font-family override |
 | `qrSize` | int | `256` | Default output size in pixels |
 | `qrCorrectLevel` | string | `H` | Error correction level: `L`, `M`, `Q`, or `H` |
 | `qrDotStyle` | string | `square` | Dot style |
@@ -149,6 +160,8 @@ The shortcode remains backward compatible with the existing attribute names.
 The plugin includes a lightweight settings page at `Settings > Client-Side QR` for global defaults:
 
 - default QR size
+- default interface shell inheritance behavior
+- default shell background, text, accent, and font overrides
 - default foreground color
 - default background color
 - default error correction

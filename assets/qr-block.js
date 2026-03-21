@@ -8,6 +8,7 @@
     var InspectorControls = blockEditor.InspectorControls;
     var MediaUpload = blockEditor.MediaUpload;
     var MediaUploadCheck = blockEditor.MediaUploadCheck;
+    var useBlockProps = blockEditor.useBlockProps;
     var PanelBody = components.PanelBody;
     var ToggleControl = components.ToggleControl;
     var ColorPicker = components.ColorPicker;
@@ -15,12 +16,19 @@
     var SelectControl = components.SelectControl;
     var Button = components.Button;
     var Notice = components.Notice;
+    var TextControl = components.TextControl;
 
     var config = window.csqrBlockConfig || {};
     var defaults = Object.assign({
         qrColorDark: '#111111',
         qrColorDark2: '#111111',
         qrColorLight: '#ffffff',
+        uiUseThemeColors: true,
+        uiUseThemeFont: true,
+        uiSurfaceColor: '',
+        uiTextColor: '',
+        uiAccentColor: '',
+        uiFontFamily: '',
         qrSize: 256,
         qrCorrectLevel: 'H',
         qrDotStyle: 'square',
@@ -48,6 +56,19 @@
         }, 0);
     }
 
+    function getShellPreviewStyle(attributes) {
+        var style = {
+            fontFamily: attributes.uiUseThemeFont ? undefined : (attributes.uiFontFamily || undefined),
+            color: attributes.uiUseThemeColors ? undefined : (attributes.uiTextColor || undefined),
+            '--csqr-ui-font': attributes.uiUseThemeFont ? undefined : (attributes.uiFontFamily || undefined),
+            '--csqr-ui-surface': attributes.uiUseThemeColors ? undefined : (attributes.uiSurfaceColor || undefined),
+            '--csqr-ui-text': attributes.uiUseThemeColors ? undefined : (attributes.uiTextColor || undefined),
+            '--csqr-ui-accent': attributes.uiUseThemeColors ? undefined : (attributes.uiAccentColor || undefined)
+        };
+
+        return style;
+    }
+
     blocks.registerBlockType('csqr/generator', {
         apiVersion: 2,
         title: __('Client-Side QR Code', 'csqr'),
@@ -58,6 +79,12 @@
             qrColorDark: { type: 'string', default: defaults.qrColorDark },
             qrColorDark2: { type: 'string', default: defaults.qrColorDark2 },
             qrColorLight: { type: 'string', default: defaults.qrColorLight },
+            uiUseThemeColors: { type: 'boolean', default: defaults.uiUseThemeColors },
+            uiUseThemeFont: { type: 'boolean', default: defaults.uiUseThemeFont },
+            uiSurfaceColor: { type: 'string', default: defaults.uiSurfaceColor },
+            uiTextColor: { type: 'string', default: defaults.uiTextColor },
+            uiAccentColor: { type: 'string', default: defaults.uiAccentColor },
+            uiFontFamily: { type: 'string', default: defaults.uiFontFamily },
             qrSize: { type: 'number', default: defaults.qrSize },
             qrCorrectLevel: { type: 'string', default: defaults.qrCorrectLevel },
             qrDotStyle: { type: 'string', default: defaults.qrDotStyle },
@@ -80,6 +107,10 @@
             var attributes = props.attributes;
             var setAttributes = props.setAttributes;
             var qrRef = useRef(null);
+            var blockProps = useBlockProps({
+                className: 'csqr-container csqr-block-preview',
+                style: getShellPreviewStyle(attributes)
+            });
 
             function setPayloadToggle(key, value) {
                 var update = {};
@@ -285,6 +316,56 @@
                                 setAttributes({ logoUrl: '' });
                             }
                         }, __('Remove logo', 'csqr'))
+                ),
+                    el(PanelBody, { title: __('Interface Shell', 'csqr'), initialOpen: false },
+                        el(ToggleControl, {
+                            label: __('Inherit theme colors', 'csqr'),
+                            checked: attributes.uiUseThemeColors,
+                            onChange: function (value) {
+                                setAttributes({ uiUseThemeColors: value });
+                            }
+                        }),
+                        !attributes.uiUseThemeColors && el(Fragment, {},
+                            el('p', { className: 'components-base-control__label' }, __('Shell background color', 'csqr')),
+                            el(ColorPicker, {
+                                color: attributes.uiSurfaceColor || '#ffffff',
+                                onChangeComplete: function (value) {
+                                    setAttributes({ uiSurfaceColor: value.hex });
+                                },
+                                disableAlpha: true
+                            }),
+                            el('p', { className: 'components-base-control__label' }, __('Shell text color', 'csqr')),
+                            el(ColorPicker, {
+                                color: attributes.uiTextColor || '#111111',
+                                onChangeComplete: function (value) {
+                                    setAttributes({ uiTextColor: value.hex });
+                                },
+                                disableAlpha: true
+                            }),
+                            el('p', { className: 'components-base-control__label' }, __('Shell accent color', 'csqr')),
+                            el(ColorPicker, {
+                                color: attributes.uiAccentColor || '#007cba',
+                                onChangeComplete: function (value) {
+                                    setAttributes({ uiAccentColor: value.hex });
+                                },
+                                disableAlpha: true
+                            })
+                        ),
+                        el(ToggleControl, {
+                            label: __('Inherit theme font', 'csqr'),
+                            checked: attributes.uiUseThemeFont,
+                            onChange: function (value) {
+                                setAttributes({ uiUseThemeFont: value });
+                            }
+                        }),
+                        !attributes.uiUseThemeFont && el(TextControl, {
+                            label: __('Shell font-family override', 'csqr'),
+                            value: attributes.uiFontFamily || '',
+                            onChange: function (value) {
+                                setAttributes({ uiFontFamily: value });
+                            },
+                            help: __('Example: "Source Serif 4", Georgia, serif', 'csqr')
+                        })
                     ),
                     el(PanelBody, { title: __('Available Payload Types', 'csqr'), initialOpen: false },
                         el(ToggleControl, {
@@ -362,17 +443,9 @@
                         })
                     )
                 ),
-                el('div', {
-                    style: {
-                        padding: '24px',
-                        backgroundColor: '#f6f7f7',
-                        border: '1px solid #dcdcde',
-                        borderRadius: '8px',
-                        textAlign: 'center'
-                    }
-                },
+                el('div', blockProps,
                     el('h4', { style: { margin: '0 0 8px' } }, __('Client-Side QR Code Preview', 'csqr')),
-                    el('p', { style: { margin: '0 0 16px', color: '#50575e' } }, __('The public block renders a fully interactive client-side QR form. This preview reflects your current design defaults.', 'csqr')),
+                    el('p', { style: { margin: '0 0 16px', color: 'inherit', opacity: '0.8' } }, __('The public block renders a fully interactive client-side QR form. This preview reflects your current design defaults and shell styling.', 'csqr')),
                     el('div', {
                         ref: qrRef,
                         style: {

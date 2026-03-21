@@ -4,7 +4,7 @@ Tags: qr code, qr generator, marketing, shortcode, block
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 4.1.3
+Stable tag: 4.1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,8 @@ Client-Side QR Code Generator helps WordPress sites publish useful QR experience
 - PNG download, SVG download, and clipboard copy support where available
 - Lightweight settings page for global defaults
 - Classic-editor shortcode builder in wp-admin
+- Theme-aware interface shell that inherits site colors and fonts by default
+- Per-instance interface shell overrides in both the block editor and shortcode builder
 - Optional opt-in GitHub release notices for self-managed installs
 
 = Good fit for =
@@ -64,6 +66,10 @@ Yes. PNG and SVG downloads are supported, and clipboard image copy is available 
 
 Yes. The plugin now includes a shortcode builder in `Settings > QR Shortcode Builder`.
 
+= Can I inherit the active theme styles but still override them when needed? =
+
+Yes. The frontend shell inherits theme colors and fonts by default, and both the block editor and shortcode builder now include override controls for the surrounding interface shell.
+
 == Screenshots ==
 
 1. Frontend QR generator with accessible payload tabs and exports
@@ -72,6 +78,12 @@ Yes. The plugin now includes a shortcode builder in `Settings > QR Shortcode Bui
 4. Shortcode builder for classic-editor workflows
 
 == Changelog ==
+
+= 4.1.4 =
+
+- Fixed Gutenberg block selection in the editor by restoring a proper block wrapper.
+- Updated the frontend shell to inherit theme context more reliably on dark and light themes.
+- Added shell style inheritance and override controls to the block editor, shortcode builder, and global defaults.
 
 = 4.1.3 =
 
@@ -109,6 +121,10 @@ Yes. The plugin now includes a shortcode builder in `Settings > QR Shortcode Bui
 - Added per-block payload type toggles.
 
 == Upgrade Notice ==
+
+= 4.1.4 =
+
+This release fixes the editor selection regression and adds cleaner theme inheritance with optional shell overrides.
 
 = 4.1.3 =
 
