@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Client-Side QR Code Generator
  * Description:       Generate privacy-friendly QR codes in the browser with a Gutenberg block and shortcode for campaigns, contact sharing, payments, and QR-driven site workflows.
- * Version:           4.1.0
+ * Version:           4.1.1
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Jeremy Anderson
@@ -10,14 +10,25 @@
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       csqr
+ * Domain Path:       /languages
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CSQR_VERSION', '4.1.0' );
+define( 'CSQR_VERSION', '4.1.1' );
 define( 'CSQR_OPTION_NAME', 'csqr_settings' );
+
+/**
+ * Load plugin translations.
+ *
+ * @return void
+ */
+function csqr_load_textdomain() {
+	load_plugin_textdomain( 'csqr', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+}
+add_action( 'init', 'csqr_load_textdomain' );
 
 /**
  * Get the plugin's default settings.
@@ -355,6 +366,8 @@ function csqr_register_block() {
 			),
 		)
 	);
+
+	wp_set_script_translations( 'csqr-block-script', 'csqr', plugin_dir_path( __FILE__ ) . 'languages' );
 
 	register_block_type(
 		'csqr/generator',

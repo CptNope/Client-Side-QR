@@ -2,7 +2,7 @@
 
 Client-Side QR Code Generator is a WordPress plugin for creating privacy-friendly QR experiences directly in the browser. It supports a Gutenberg block and shortcode, keeps QR rendering on the client side, and gives site owners flexible controls for links, campaigns, contact sharing, WiFi access, and payment flows.
 
-Version: `4.1.0`
+Version: `4.1.1`
 
 ## Why this plugin
 
@@ -54,7 +54,9 @@ Version: `4.1.0`
 - `assets/qr-block.js` - block editor controls and live preview
 - `assets/qr-style.css` - frontend styles and accessibility-focused UI states
 - `assets/vendor/qr-code-styling.js` - bundled QR rendering library
+- `languages/csqr.pot` - translation template for the `csqr` text domain
 - `readme.txt` - WordPress.org style plugin metadata
+- `.wordpress-org/` - banner, icon, and screenshot scaffold for WordPress.org assets
 - `THIRD_PARTY_NOTICES.md` - third-party attribution and compatibility notes
 - `uninstall.php` - plugin cleanup for stored settings
 - `CHANGELOG.md` - release history
@@ -151,7 +153,22 @@ These defaults apply to new instances and can still be overridden per block or s
 
 - The plugin bundles `qr-code-styling` locally instead of loading it from a CDN.
 - The block is dynamic and rendered through PHP for consistent frontend output.
+- The plugin loads translations from `languages/` and includes a generated `csqr.pot` file for translators.
 - The code includes filters for defaults and instance settings so future add-ons can extend behavior without rewriting core free-plugin logic.
+
+## WordPress.org asset notes
+
+The repository includes a `.wordpress-org/` scaffold for directory assets that are separate from runtime plugin files.
+
+Recommended filenames:
+
+- `banner-772x250.png`
+- `banner-1544x500.png`
+- `icon-128x128.png`
+- `icon-256x256.png`
+- `screenshot-1.png`
+- `screenshot-2.png`
+- `screenshot-3.png`
 
 ## Third-party library attribution
 

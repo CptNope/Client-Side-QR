@@ -2,12 +2,24 @@
 
 All notable changes to the Client-Side QR Code Generator will be documented in this file.
 
+## [4.1.1] - Release Packaging And Growth Planning
+### Added
+- `ROADMAP.md` with monetization and marketing guidance for future product expansion.
+- WordPress.org starter banner, icon, and screenshot assets in `.wordpress-org/`.
+- Source design files for the WordPress.org visual kit.
+
+### Changed
+- Updated plugin version metadata to `4.1.1`.
+- Added reusable tooling for generating WordPress.org assets and translation templates.
+
 ## [4.1.0] - Public Release Readiness
 ### Added
 - Lightweight settings page for site-wide defaults under `Settings > Client-Side QR`.
 - WordPress.org style `readme.txt`.
 - `uninstall.php` cleanup for stored plugin settings.
 - `THIRD_PARTY_NOTICES.md` for bundled dependency attribution.
+- `languages/csqr.pot` translation template and a local generator script.
+- `.wordpress-org/` scaffold for banner, icon, and screenshot assets.
 
 ### Changed
 - Updated plugin licensing metadata to `GPL-2.0-or-later`.

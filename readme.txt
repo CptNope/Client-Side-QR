@@ -4,7 +4,7 @@ Tags: qr code, qr generator, marketing, shortcode, block
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 4.1.0
+Stable tag: 4.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,7 +48,7 @@ No. QR rendering happens client-side in the browser.
 
 = Does the plugin still use a CDN? =
 
-No. Version 4.1.0 bundles the `qr-code-styling` library locally inside the plugin.
+No. Version 4.1.0 and later bundle the `qr-code-styling` library locally inside the plugin.
 
 = Can I use the plugin without Gutenberg? =
 
@@ -66,6 +66,12 @@ Yes. PNG and SVG downloads are supported, and clipboard image copy is available 
 
 == Changelog ==
 
+= 4.1.1 =
+
+- Added a monetization and growth roadmap for future product planning.
+- Added WordPress.org starter banner, icon, and screenshot assets.
+- Added translation tooling documentation and generated language template support.
+
 = 4.1.0 =
 
 - Switched plugin licensing metadata to GPL-2.0-or-later for WordPress distribution.
@@ -75,6 +81,7 @@ Yes. PNG and SVG downloads are supported, and clipboard image copy is available 
 - Hardened shortcode and settings sanitization.
 - Added uninstall cleanup for stored options.
 - Added WordPress.org style readme metadata and third-party notices.
+- Added a translation template and repo structure for WordPress.org banner and icon assets.
 
 = 4.0.0 =
 
@@ -84,6 +91,10 @@ Yes. PNG and SVG downloads are supported, and clipboard image copy is available 
 - Added per-block payload type toggles.
 
 == Upgrade Notice ==
+
+= 4.1.1 =
+
+This release adds WordPress.org media assets, translation tooling support, and a product roadmap for future monetization planning.
 
 = 4.1.0 =
 

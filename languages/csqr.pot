@@ -1,0 +1,478 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Client-Side QR Code Generator 4.1.1\n"
+"Report-Msgid-Bugs-To: https://github.com/CptNope/Client-Side-QR/issues\n"
+"POT-Creation-Date: 2026-03-21 04:32:07+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Domain: csqr\n"
+"X-Generator: tools/generate-pot.js\n"
+
+#: client-side-qr.php:602
+msgid "Address"
+msgstr ""
+
+#: assets\qr-block.js:343
+msgid "Allow visitors to change colors"
+msgstr ""
+
+#: assets\qr-block.js:357
+msgid "Allow visitors to change error correction"
+msgstr ""
+
+#: assets\qr-block.js:350
+msgid "Allow visitors to change size"
+msgstr ""
+
+#: client-side-qr.php:663
+#: client-side-qr.php:683
+msgid "Amount"
+msgstr ""
+
+#: assets\qr-block.js:339
+msgid "At least one payload type stays enabled so the block remains usable."
+msgstr ""
+
+#: assets\qr-block.js:289
+msgid "Available Payload Types"
+msgstr ""
+
+#: assets\qr-block.js:234
+#: client-side-qr.php:723
+msgid "Background color"
+msgstr ""
+
+#: client-side-qr.php:654
+msgid "Bitcoin (BTC)"
+msgstr ""
+
+#: client-side-qr.php:464
+msgid "Build QR codes in the browser for links, campaigns, contact sharing, WiFi access, and payment flows."
+msgstr ""
+
+#: client-side-qr.php:516
+msgid "Campaign name"
+msgstr ""
+
+#: assets\qr-block.js:265
+msgid "Center logo"
+msgstr ""
+
+#: assets\qr-block.js:277
+msgid "Change logo"
+msgstr ""
+
+#: assets\qr-block.js:182
+msgid "Classy"
+msgstr ""
+
+#: assets\qr-block.js:183
+msgid "Classy Rounded"
+msgstr ""
+
+#: client-side-qr.php:216
+#: client-side-qr.php:217
+msgid "Client-Side QR"
+msgstr ""
+
+#: assets\qr-block.js:53
+msgid "Client-Side QR Code"
+msgstr ""
+
+#: client-side-qr.php:238
+msgid "Client-Side QR Code Generator"
+msgstr ""
+
+#: assets\qr-block.js:374
+msgid "Client-Side QR Code Preview"
+msgstr ""
+
+#: client-side-qr.php:324
+msgid "Clipboard image copy is not supported in this browser."
+msgstr ""
+
+#: client-side-qr.php:587
+msgid "Company"
+msgstr ""
+
+#: client-side-qr.php:327
+#: client-side-qr.php:758
+msgid "Complete the active fields to generate a QR code."
+msgstr ""
+
+#: client-side-qr.php:762
+msgid "Copy image"
+msgstr ""
+
+#: assets\qr-block.js:226
+msgid "Corner eye color"
+msgstr ""
+
+#: assets\qr-block.js:215
+msgid "Corner eye style"
+msgstr ""
+
+#: client-side-qr.php:280
+#: client-side-qr.php:419
+msgid "Crypto"
+msgstr ""
+
+#: assets\qr-block.js:326
+msgid "Crypto wallet"
+msgstr ""
+
+#: client-side-qr.php:653
+#: client-side-qr.php:688
+msgid "Currency"
+msgstr ""
+
+#: client-side-qr.php:257
+msgid "Default background color"
+msgstr ""
+
+#: client-side-qr.php:261
+msgid "Default error correction"
+msgstr ""
+
+#: client-side-qr.php:253
+msgid "Default foreground color"
+msgstr ""
+
+#: assets\qr-block.js:243
+msgid "Default output size (px)"
+msgstr ""
+
+#: client-side-qr.php:249
+msgid "Default output size in pixels for new instances."
+msgstr ""
+
+#: client-side-qr.php:246
+msgid "Default QR size"
+msgstr ""
+
+#: assets\qr-block.js:173
+msgid "Design Defaults"
+msgstr ""
+
+#: client-side-qr.php:698
+msgid "Design options"
+msgstr ""
+
+#: assets\qr-block.js:219
+msgid "Dot"
+msgstr ""
+
+#: assets\qr-block.js:175
+msgid "Dot style"
+msgstr ""
+
+#: assets\qr-block.js:179
+msgid "Dots"
+msgstr ""
+
+#: client-side-qr.php:760
+msgid "Download PNG"
+msgstr ""
+
+#: client-side-qr.php:761
+msgid "Download SVG"
+msgstr ""
+
+#: assets\qr-block.js:312
+#: client-side-qr.php:278
+#: client-side-qr.php:417
+msgid "Email"
+msgstr ""
+
+#: client-side-qr.php:579
+#: client-side-qr.php:614
+msgid "Email address"
+msgstr ""
+
+#: assets\qr-block.js:341
+msgid "End-User Controls"
+msgstr ""
+
+#: client-side-qr.php:496
+msgid "Enter a URL or plain text"
+msgstr ""
+
+#: client-side-qr.php:745
+msgid "Error correction"
+msgstr ""
+
+#: assets\qr-block.js:253
+msgid "Error correction level"
+msgstr ""
+
+#: client-side-qr.php:654
+msgid "Ethereum (ETH)"
+msgstr ""
+
+#: assets\qr-block.js:181
+#: assets\qr-block.js:220
+msgid "Extra Rounded"
+msgstr ""
+
+#: client-side-qr.php:560
+msgid "First name"
+msgstr ""
+
+#: client-side-qr.php:511
+msgid "For example: poster"
+msgstr ""
+
+#: client-side-qr.php:506
+msgid "For example: print"
+msgstr ""
+
+#: assets\qr-block.js:196
+#: client-side-qr.php:711
+msgid "Foreground color 1"
+msgstr ""
+
+#: assets\qr-block.js:205
+#: client-side-qr.php:717
+msgid "Foreground color 2"
+msgstr ""
+
+#: client-side-qr.php:463
+msgid "Generate QR Code"
+msgstr ""
+
+#: client-side-qr.php:756
+msgid "Generated QR code preview"
+msgstr ""
+
+#: client-side-qr.php:548
+msgid "Hidden network"
+msgstr ""
+
+#: assets\qr-block.js:259
+#: client-side-qr.php:267
+#: client-side-qr.php:746
+msgid "High (30%)"
+msgstr ""
+
+#: client-side-qr.php:283
+msgid "If every payload type is disabled, URL / Text will be restored automatically so new instances always stay usable."
+msgstr ""
+
+#: client-side-qr.php:592
+msgid "Job title"
+msgstr ""
+
+#: client-side-qr.php:565
+msgid "Last name"
+msgstr ""
+
+#: client-side-qr.php:654
+msgid "Litecoin (LTC)"
+msgstr ""
+
+#: assets\qr-block.js:384
+msgid "Loading preview…"
+msgstr ""
+
+#: assets\qr-block.js:256
+#: client-side-qr.php:264
+#: client-side-qr.php:746
+msgid "Low (7%)"
+msgstr ""
+
+#: assets\qr-block.js:257
+#: client-side-qr.php:265
+#: client-side-qr.php:746
+msgid "Medium (15%)"
+msgstr ""
+
+#: client-side-qr.php:641
+msgid "Message"
+msgstr ""
+
+#: client-side-qr.php:624
+msgid "Message body"
+msgstr ""
+
+#: client-side-qr.php:529
+msgid "Network name (SSID)"
+msgstr ""
+
+#: client-side-qr.php:543
+msgid "No password"
+msgstr ""
+
+#: client-side-qr.php:500
+msgid "Optional campaign parameters"
+msgstr ""
+
+#: client-side-qr.php:534
+msgid "Password"
+msgstr ""
+
+#: client-side-qr.php:272
+msgid "Payload types enabled by default"
+msgstr ""
+
+#: client-side-qr.php:281
+#: client-side-qr.php:420
+msgid "PayPal"
+msgstr ""
+
+#: assets\qr-block.js:333
+msgid "PayPal.me"
+msgstr ""
+
+#: client-side-qr.php:675
+msgid "PayPal.me username"
+msgstr ""
+
+#: client-side-qr.php:574
+#: client-side-qr.php:636
+msgid "Phone number"
+msgstr ""
+
+#: client-side-qr.php:323
+msgid "QR code image copied to your clipboard."
+msgstr ""
+
+#: client-side-qr.php:326
+msgid "QR code ready for download."
+msgstr ""
+
+#: client-side-qr.php:468
+msgid "QR content type"
+msgstr ""
+
+#: client-side-qr.php:697
+msgid "QR design controls"
+msgstr ""
+
+#: assets\qr-block.js:258
+#: client-side-qr.php:266
+#: client-side-qr.php:746
+msgid "Quartile (25%)"
+msgstr ""
+
+#: assets\qr-block.js:287
+msgid "Remove logo"
+msgstr ""
+
+#: assets\qr-block.js:56
+msgid "Render privacy-friendly QR forms that generate in the browser for links, campaigns, contact details, WiFi, and payment flows."
+msgstr ""
+
+#: assets\qr-block.js:180
+msgid "Rounded"
+msgstr ""
+
+#: client-side-qr.php:542
+msgid "Security type"
+msgstr ""
+
+#: client-side-qr.php:239
+msgid "Set lightweight defaults for new QR block and shortcode instances. Existing content can still override these values per instance."
+msgstr ""
+
+#: client-side-qr.php:733
+msgid "Size"
+msgstr ""
+
+#: assets\qr-block.js:319
+#: client-side-qr.php:279
+#: client-side-qr.php:418
+msgid "SMS"
+msgstr ""
+
+#: assets\qr-block.js:178
+#: assets\qr-block.js:218
+msgid "Square"
+msgstr ""
+
+#: client-side-qr.php:619
+msgid "Subject"
+msgstr ""
+
+#: assets\qr-block.js:375
+msgid "The public block renders a fully interactive client-side QR form. This preview reflects your current design defaults."
+msgstr ""
+
+#: client-side-qr.php:325
+msgid "The QR code could not be copied right now."
+msgstr ""
+
+#: client-side-qr.php:704
+msgid "Transparent background"
+msgstr ""
+
+#: assets\qr-block.js:277
+msgid "Upload logo"
+msgstr ""
+
+#: client-side-qr.php:414
+msgid "URL"
+msgstr ""
+
+#: assets\qr-block.js:291
+#: client-side-qr.php:275
+msgid "URL / Text"
+msgstr ""
+
+#: client-side-qr.php:495
+msgid "URL or text"
+msgstr ""
+
+#: assets\qr-block.js:190
+msgid "Use a foreground gradient"
+msgstr ""
+
+#: client-side-qr.php:515
+msgid "UTM campaign"
+msgstr ""
+
+#: client-side-qr.php:510
+msgid "UTM medium"
+msgstr ""
+
+#: client-side-qr.php:505
+msgid "UTM source"
+msgstr ""
+
+#: client-side-qr.php:277
+#: client-side-qr.php:416
+msgid "vCard"
+msgstr ""
+
+#: assets\qr-block.js:305
+msgid "vCard contact"
+msgstr ""
+
+#: client-side-qr.php:658
+msgid "Wallet address"
+msgstr ""
+
+#: client-side-qr.php:597
+msgid "Website"
+msgstr ""
+
+#: client-side-qr.php:543
+msgid "WEP"
+msgstr ""
+
+#: client-side-qr.php:276
+#: client-side-qr.php:415
+msgid "WiFi"
+msgstr ""
+
+#: assets\qr-block.js:298
+msgid "WiFi network"
+msgstr ""
+
+#: client-side-qr.php:543
+msgid "WPA/WPA2"
+msgstr ""
+
