@@ -1,38 +1,31 @@
 # Client-Side QR Code Generator
 
-Client-Side QR Code Generator is a WordPress plugin that renders customizable QR codes in the browser using [`qr-code-styling`](https://github.com/kozakdenys/qr-code-styling). It supports both a Gutenberg block and a classic shortcode, with live generation on the frontend and no server-side image rendering.
+Client-Side QR Code Generator is a WordPress plugin for creating privacy-friendly QR experiences directly in the browser. It supports a Gutenberg block and shortcode, keeps QR rendering on the client side, and gives site owners flexible controls for links, campaigns, contact sharing, WiFi access, and payment flows.
 
-Version: `4.0.0`
+Version: `4.1.0`
 
-## Overview
+## Why this plugin
 
-This plugin is designed for sites that want attractive QR codes without relying on a remote QR generation API or heavy server-side processing. The rendered QR code is created in the visitor's browser, and the plugin exposes controls for styling, data formatting, downloads, and optional end-user customization.
-
-The plugin currently ships as a small codebase:
-
-- `client-side-qr.php` - main plugin file, shortcode, block registration, enqueue logic
-- `assets/qr-block.js` - Gutenberg block editor controls and preview
-- `assets/qr-script.js` - frontend QR generation logic
-- `assets/qr-style.css` - frontend styling
-- `CHANGELOG.md` - release history
+- Client-side QR generation with no external QR API required
+- Useful for landing pages, printed campaigns, events, contact sharing, and on-site QR workflows
+- Dynamic frontend interface with multiple payload types in one block or shortcode
+- Built for WordPress sites that want styling controls without server-side image generation
 
 ## Features
 
 - Gutenberg block: `csqr/generator`
-- Classic shortcode: `[client_side_qr]`
-- Client-side QR rendering with `qr-code-styling`
-- Live frontend generation as users type
-- Live preview inside the block editor
-- Support for multiple QR payload types:
+- Shortcode: `[client_side_qr]`
+- Bundled local copy of `qr-code-styling` for WordPress.org-friendlier packaging
+- QR payload types:
   - URL / plain text
-  - WiFi network
-  - vCard contact
+  - WiFi
+  - vCard
   - Email
   - SMS
   - Crypto wallet
   - PayPal.me
-- Built-in UTM parameter builder for URL codes
-- Customizable design options:
+- Built-in UTM builder for campaign QR links
+- Styling controls for:
   - foreground color
   - optional foreground gradient
   - background color
@@ -40,227 +33,143 @@ The plugin currently ships as a small codebase:
   - corner eye style
   - corner eye color
   - logo image
-  - output size
-  - error correction level
-- Optional end-user controls for:
-  - colors
   - size
   - error correction level
+- Optional end-user controls for:
+  - color changes
+  - size changes
+  - error correction changes
   - transparent background
 - Export actions:
-  - download PNG
-  - download SVG
-  - copy image to clipboard
-- Translation-ready strings using the `csqr` text domain
+  - PNG download
+  - SVG download
+  - clipboard image copy where browser support is available
+- Lightweight global settings page for defaults
+- Translation-ready strings with the `csqr` text domain
 
-## Supported QR Content Types
+## Plugin structure
 
-The frontend UI can expose one or more of the following tabs:
-
-- `URL`: plain URL or text input, with optional `utm_source`, `utm_medium`, and `utm_campaign`
-- `WiFi`: SSID, password, encryption type, hidden network toggle
-- `vCard`: first name, last name, phone, email, company, title, website, address
-- `Email`: recipient, subject, message body
-- `SMS`: phone number and message
-- `Crypto`: Bitcoin, Ethereum, or Litecoin wallet address with optional amount
-- `PayPal`: PayPal.me username with optional amount and currency
-
-Each block instance can enable or disable these data types independently in the editor sidebar.
-
-## Requirements
-
-- WordPress `5.0+`
-- A theme/page where JavaScript is allowed to run normally
-- Internet access to load the `qr-code-styling` library from jsDelivr:
-  - `https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js`
+- `client-side-qr.php` - main plugin bootstrap, asset registration, settings page, block registration, shortcode rendering
+- `assets/qr-script.js` - frontend QR logic and accessible tab behavior
+- `assets/qr-block.js` - block editor controls and live preview
+- `assets/qr-style.css` - frontend styles and accessibility-focused UI states
+- `assets/vendor/qr-code-styling.js` - bundled QR rendering library
+- `readme.txt` - WordPress.org style plugin metadata
+- `THIRD_PARTY_NOTICES.md` - third-party attribution and compatibility notes
+- `uninstall.php` - plugin cleanup for stored settings
+- `CHANGELOG.md` - release history
 
 ## Installation
 
-### Install from this repository
-
-1. Copy this project into your WordPress plugins directory.
-2. Make sure the folder contains:
-   - `client-side-qr.php`
-   - `assets/`
-3. Rename the plugin folder if needed.
-4. Activate the plugin in WordPress under `Plugins`.
-
-Example plugin path:
-
-```text
-wp-content/plugins/client-side-qr-code-generator/
-```
-
-### Install as a ZIP
-
-1. Zip the plugin folder.
-2. In WordPress admin, go to `Plugins > Add New Plugin > Upload Plugin`.
-3. Upload the ZIP file.
-4. Activate the plugin.
+1. Copy this project into `wp-content/plugins/`.
+2. Ensure the folder contains `client-side-qr.php` and the `assets/` directory.
+3. Activate the plugin in `Plugins`.
+4. Optionally set global defaults in `Settings > Client-Side QR`.
 
 ## Usage
 
 ### Gutenberg block
 
 1. Open a post or page in the block editor.
-2. Add the block named `Client-Side QR Code`.
-3. Configure design settings in the inspector panel.
-4. Toggle which data type tabs should be available.
-5. Optionally allow site visitors to change color, size, or correction level.
-6. Publish or update the page.
+2. Insert the `Client-Side QR Code` block.
+3. Configure design defaults, payload types, and optional end-user controls.
+4. Publish the page.
 
 ### Shortcode
 
-Use the shortcode anywhere shortcodes are supported:
+Basic example:
 
 ```shortcode
 [client_side_qr]
 ```
 
-Minimal example with some custom styling:
+Custom styling example:
 
 ```shortcode
 [client_side_qr qrColorDark="#111111" qrColorLight="#ffffff" qrSize="320" qrDotStyle="rounded"]
 ```
 
-Example with limited tabs and end-user controls enabled:
+Limited payload example:
 
 ```shortcode
-[client_side_qr enableUrl="true" enableWifi="false" enableEmail="true" enableSms="false" enableVcard="false" enableCrypto="false" enablePaypal="false" allowUserColor="true" allowUserSize="true" allowUserCorrectLevel="true"]
+[client_side_qr enableUrl="true" enableWifi="false" enableEmail="true" enableSms="false" enableVcard="false" enableCrypto="false" enablePaypal="false"]
 ```
 
-Example with gradient and logo:
+Gradient and logo example:
 
 ```shortcode
 [client_side_qr qrGradient="true" qrColorDark="#0f172a" qrColorDark2="#2563eb" logoUrl="https://example.com/logo.png"]
 ```
 
-## Shortcode Attributes
+## Shortcode attributes
 
-The shortcode maps directly to the defaults defined in `client-side-qr.php`.
+The shortcode remains backward compatible with the existing attribute names.
 
 | Attribute | Type | Default | Description |
 | --- | --- | --- | --- |
 | `qrColorDark` | string | `#111111` | Primary foreground color |
-| `qrColorDark2` | string | `#111111` | Secondary foreground color used when gradient is enabled |
+| `qrColorDark2` | string | `#111111` | Secondary foreground color when gradients are enabled |
 | `qrColorLight` | string | `#ffffff` | Background color |
-| `qrSize` | int | `256` | Default QR output size in pixels |
+| `qrSize` | int | `256` | Default output size in pixels |
 | `qrCorrectLevel` | string | `H` | Error correction level: `L`, `M`, `Q`, or `H` |
-| `qrDotStyle` | string | `square` | Dot style for the QR modules |
+| `qrDotStyle` | string | `square` | Dot style |
 | `qrEyeStyle` | string | `square` | Corner eye style |
 | `qrEyeColor` | string | empty | Optional eye color override |
-| `qrGradient` | bool | `false` | Enables a linear gradient using `qrColorDark` and `qrColorDark2` |
-| `logoUrl` | string | empty | Center logo image URL |
-| `allowUserColor` | bool | `false` | Lets visitors change colors and toggle transparent background |
-| `allowUserSize` | bool | `false` | Lets visitors change output size |
-| `allowUserCorrectLevel` | bool | `false` | Lets visitors change error correction level |
-| `enableUrl` | bool | `true` | Show the URL / text tab |
-| `enableWifi` | bool | `true` | Show the WiFi tab |
-| `enableEmail` | bool | `true` | Show the Email tab |
-| `enableSms` | bool | `true` | Show the SMS tab |
-| `enableVcard` | bool | `true` | Show the vCard tab |
-| `enableCrypto` | bool | `true` | Show the Crypto tab |
-| `enablePaypal` | bool | `true` | Show the PayPal tab |
+| `qrGradient` | bool | `false` | Enable a linear foreground gradient |
+| `logoUrl` | string | empty | Logo image URL |
+| `allowUserColor` | bool | `false` | Allow visitors to change colors |
+| `allowUserSize` | bool | `false` | Allow visitors to change size |
+| `allowUserCorrectLevel` | bool | `false` | Allow visitors to change error correction |
+| `enableUrl` | bool | `true` | Enable the URL / text payload |
+| `enableWifi` | bool | `true` | Enable the WiFi payload |
+| `enableEmail` | bool | `true` | Enable the Email payload |
+| `enableSms` | bool | `true` | Enable the SMS payload |
+| `enableVcard` | bool | `true` | Enable the vCard payload |
+| `enableCrypto` | bool | `true` | Enable the Crypto payload |
+| `enablePaypal` | bool | `true` | Enable the PayPal payload |
 
-## Editor Settings
+## Accessibility notes
 
-The block sidebar currently exposes three main groups:
+- Payload switching now uses keyboard-accessible tabs with proper `tablist`, `tab`, and `tabpanel` semantics.
+- Form controls use visible labels instead of placeholder-only labeling.
+- Status updates for QR generation and clipboard actions are announced through a live region.
+- Focus states are styled for keyboard users.
 
-### Design Settings
+## Settings page
 
-- dot style
-- foreground gradient toggle
-- foreground colors
-- corner eye style
-- corner eye color
-- background color
-- default output size
-- error correction level
-- center logo upload
+The plugin includes a lightweight settings page at `Settings > Client-Side QR` for global defaults:
 
-### Available Data Types
+- default QR size
+- default foreground color
+- default background color
+- default error correction
+- payload types enabled by default
 
-You can independently enable or disable:
+These defaults apply to new instances and can still be overridden per block or shortcode.
 
-- URL / Text
-- WiFi Network
-- vCard
-- Email
-- SMS / Phone
-- Crypto Wallet
-- PayPal.me
+## Architecture notes
 
-### End-User Controls
+- The plugin bundles `qr-code-styling` locally instead of loading it from a CDN.
+- The block is dynamic and rendered through PHP for consistent frontend output.
+- The code includes filters for defaults and instance settings so future add-ons can extend behavior without rewriting core free-plugin logic.
 
-You can allow visitors to change:
+## Third-party library attribution
 
-- colors
-- size
-- error correction level
+This plugin bundles `qr-code-styling` by Denys Kozak.
 
-## Frontend Behavior
+- Package: `qr-code-styling`
+- Version bundled: `1.5.0`
+- License: MIT
+- Source: <https://github.com/kozakdenys/qr-code-styling>
 
-- The QR code updates automatically as the user types or changes options.
-- If the active form is incomplete, the output area stays hidden.
-- Download buttons appear only after a valid QR code is generated.
-- PNG and SVG downloads are handled by `qr-code-styling`.
-- The copy button uses the browser clipboard API to write a PNG image.
-
-## How It Works
-
-### Rendering model
-
-- WordPress outputs the form and container markup on the page.
-- The browser loads `qr-code-styling` from a CDN.
-- `assets/qr-script.js` reads the active form values and styling options.
-- A QR code is rendered into the page client-side.
-
-### Block model
-
-- The Gutenberg block registers as `csqr/generator`.
-- The editor preview uses a sample URL and re-renders when design settings change.
-- The saved block output is handled through the PHP render callback, so the block behaves as a dynamic block.
-
-## Accessibility and Compatibility Notes
-
-- The UI is keyboard-usable for standard form controls, but there is no dedicated accessibility audit in this repo yet.
-- Clipboard image copy depends on browser support for `navigator.clipboard` and `ClipboardItem`.
-- The plugin uses external CDN assets, so locked-down environments may need to self-host the QR library.
-- If a logo image is loaded from another origin, browser/CORS behavior may affect export or clipboard actions depending on the environment.
-
-## Limitations
-
-- There is no admin settings page; configuration is done per block or shortcode instance.
-- The QR library is loaded from jsDelivr rather than bundled locally.
-- Translation strings are wrapped in code, but no `.pot` file is included in this repository.
-- No automated tests are included in this project.
-- The shortcode interface is powerful but not especially user-friendly for non-technical site owners compared with a dedicated settings UI.
-
-## Development Notes
-
-This plugin is intentionally lightweight and uses plain PHP, plain JavaScript, and WordPress block APIs directly.
-
-If you modify the plugin:
-
-1. Update the plugin header version in `client-side-qr.php`.
-2. Update asset version strings where needed.
-3. Add release notes to `CHANGELOG.md`.
-4. Re-test both:
-   - Gutenberg block flow
-   - shortcode flow
-
-## File Reference
-
-- Main plugin: `client-side-qr.php`
-- Frontend script: `assets/qr-script.js`
-- Block editor script: `assets/qr-block.js`
-- Styles: `assets/qr-style.css`
-- Changelog: `CHANGELOG.md`
-
-## Changelog
-
-See `CHANGELOG.md` for version history.
+See `THIRD_PARTY_NOTICES.md` for attribution details.
 
 ## License
 
-No license file is currently included in this repository. If you plan to distribute this plugin publicly, adding an explicit license is recommended.
+The plugin code in this repository is licensed under `GPL-2.0-or-later`.
+
+Bundled third-party dependencies may use their own compatible licenses. Attribution for those dependencies is preserved in `THIRD_PARTY_NOTICES.md`.
+
+## Changelog
+
+See `CHANGELOG.md`.

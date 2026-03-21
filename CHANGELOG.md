@@ -2,6 +2,20 @@
 
 All notable changes to the Client-Side QR Code Generator will be documented in this file.
 
+## [4.1.0] - Public Release Readiness
+### Added
+- Lightweight settings page for site-wide defaults under `Settings > Client-Side QR`.
+- WordPress.org style `readme.txt`.
+- `uninstall.php` cleanup for stored plugin settings.
+- `THIRD_PARTY_NOTICES.md` for bundled dependency attribution.
+
+### Changed
+- Updated plugin licensing metadata to `GPL-2.0-or-later`.
+- Bundled `qr-code-styling` locally instead of loading it from jsDelivr.
+- Improved frontend accessibility with keyboard tabs, visible labels, focus states, and live status messaging.
+- Hardened shortcode and settings sanitization.
+- Refined README positioning for privacy-friendly, client-side QR workflows.
+
 ## [4.0.0] - The Mastercraft Polish
 ### Added
 - Independent Corner "Eye" Customization (Make edges dotted, rounded, or entirely different colors from the center dots).
