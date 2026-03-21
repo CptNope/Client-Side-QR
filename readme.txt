@@ -4,7 +4,7 @@ Tags: qr code, qr generator, marketing, shortcode, block
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 4.1.1
+Stable tag: 4.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,6 +24,8 @@ Client-Side QR Code Generator helps WordPress sites publish useful QR experience
 - Optional end-user controls for colors, size, and error correction
 - PNG download, SVG download, and clipboard copy support where available
 - Lightweight settings page for global defaults
+- Classic-editor shortcode builder in wp-admin
+- Optional opt-in GitHub release notices for self-managed installs
 
 = Good fit for =
 
@@ -58,6 +60,10 @@ Yes. The `[client_side_qr]` shortcode remains supported.
 
 Yes. PNG and SVG downloads are supported, and clipboard image copy is available when the browser supports the required APIs.
 
+= Is there a helper for classic editor shortcode use? =
+
+Yes. The plugin now includes a shortcode builder in `Settings > QR Shortcode Builder`.
+
 == Screenshots ==
 
 1. Frontend QR generator with accessible payload tabs and exports
@@ -65,6 +71,12 @@ Yes. PNG and SVG downloads are supported, and clipboard image copy is available 
 3. Lightweight settings page for site-wide defaults
 
 == Changelog ==
+
+= 4.1.2 =
+
+- Added a classic-editor shortcode builder screen with preview support.
+- Added optional opt-in GitHub release notices for self-managed installs.
+- Updated the frontend shell to inherit theme fonts and text color more naturally by default.
 
 = 4.1.1 =
 
@@ -91,6 +103,10 @@ Yes. PNG and SVG downloads are supported, and clipboard image copy is available 
 - Added per-block payload type toggles.
 
 == Upgrade Notice ==
+
+= 4.1.2 =
+
+This release adds a classic-editor shortcode builder, opt-in GitHub release notices, and more theme-friendly frontend defaults.
 
 = 4.1.1 =
 

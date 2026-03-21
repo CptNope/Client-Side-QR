@@ -2,7 +2,7 @@
 
 Client-Side QR Code Generator is a WordPress plugin for creating privacy-friendly QR experiences directly in the browser. It supports a Gutenberg block and shortcode, keeps QR rendering on the client side, and gives site owners flexible controls for links, campaigns, contact sharing, WiFi access, and payment flows.
 
-Version: `4.1.1`
+Version: `4.1.2`
 
 ## Why this plugin
 
@@ -45,6 +45,8 @@ Version: `4.1.1`
   - SVG download
   - clipboard image copy where browser support is available
 - Lightweight global settings page for defaults
+- Classic-editor shortcode builder for admin-side shortcode configuration
+- Optional opt-in GitHub release notices for self-managed installs
 - Translation-ready strings with the `csqr` text domain
 
 ## Plugin structure
@@ -67,6 +69,7 @@ Version: `4.1.1`
 2. Ensure the folder contains `client-side-qr.php` and the `assets/` directory.
 3. Activate the plugin in `Plugins`.
 4. Optionally set global defaults in `Settings > Client-Side QR`.
+5. Use `Settings > QR Shortcode Builder` if you want to configure shortcode output visually for classic-editor workflows.
 
 ## Usage
 
@@ -102,6 +105,10 @@ Gradient and logo example:
 ```shortcode
 [client_side_qr qrGradient="true" qrColorDark="#0f172a" qrColorDark2="#2563eb" logoUrl="https://example.com/logo.png"]
 ```
+
+### Classic editor workflow
+
+If you are using the classic editor or a classic theme workflow, you can use the shortcode builder at `Settings > QR Shortcode Builder` to generate and preview shortcode output without hand-writing attributes.
 
 ## Shortcode attributes
 
@@ -149,11 +156,31 @@ The plugin includes a lightweight settings page at `Settings > Client-Side QR` f
 
 These defaults apply to new instances and can still be overridden per block or shortcode.
 
+## Shortcode builder
+
+The plugin includes a shortcode builder screen at `Settings > QR Shortcode Builder`.
+
+It can be used to:
+
+- configure shortcode attributes visually
+- generate copy/paste-ready shortcode output
+- preview frontend rendering from wp-admin
+- support classic-editor and shortcode-heavy workflows more comfortably
+
+## Release notices
+
+The plugin can optionally check GitHub for newer releases and show an admin notice when one is available.
+
+- this feature is off by default
+- it must be enabled by an administrator
+- it is intended mainly for self-managed installs that track the GitHub repository directly
+
 ## Architecture notes
 
 - The plugin bundles `qr-code-styling` locally instead of loading it from a CDN.
 - The block is dynamic and rendered through PHP for consistent frontend output.
 - The plugin loads translations from `languages/` and includes a generated `csqr.pot` file for translators.
+- The frontend shell now inherits theme typography and text color more naturally by default for both block and shortcode output.
 - The code includes filters for defaults and instance settings so future add-ons can extend behavior without rewriting core free-plugin logic.
 
 ## WordPress.org asset notes

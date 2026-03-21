@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Client-Side QR Code Generator
  * Description:       Generate privacy-friendly QR codes in the browser with a Gutenberg block and shortcode for campaigns, contact sharing, payments, and QR-driven site workflows.
- * Version:           4.1.1
+ * Version:           4.1.2
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Jeremy Anderson
@@ -17,8 +17,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CSQR_VERSION', '4.1.1' );
+define( 'CSQR_VERSION', '4.1.2' );
 define( 'CSQR_OPTION_NAME', 'csqr_settings' );
+define( 'CSQR_RELEASE_TRANSIENT', 'csqr_github_release_data' );
+define( 'CSQR_RELEASE_CRON_HOOK', 'csqr_check_github_release_event' );
 
 /**
  * Load plugin translations.
@@ -50,6 +52,7 @@ function csqr_get_default_settings() {
 		'allowUserColor'    => false,
 		'allowUserSize'     => false,
 		'allowUserCorrectLevel' => false,
+		'enableGithubReleaseNotifications' => false,
 		'enableUrl'         => true,
 		'enableWifi'        => true,
 		'enableEmail'       => true,
@@ -126,6 +129,7 @@ function csqr_sanitize_settings( $settings ) {
 		'allowUserColor'        => rest_sanitize_boolean( $settings['allowUserColor'] ?? $defaults['allowUserColor'] ),
 		'allowUserSize'         => rest_sanitize_boolean( $settings['allowUserSize'] ?? $defaults['allowUserSize'] ),
 		'allowUserCorrectLevel' => rest_sanitize_boolean( $settings['allowUserCorrectLevel'] ?? $defaults['allowUserCorrectLevel'] ),
+		'enableGithubReleaseNotifications' => rest_sanitize_boolean( $settings['enableGithubReleaseNotifications'] ?? $defaults['enableGithubReleaseNotifications'] ),
 	);
 
 	foreach ( csqr_get_payload_keys() as $payload_key ) {
@@ -203,6 +207,10 @@ function csqr_sanitize_option_settings( $settings ) {
 		}
 	}
 
+	if ( ! array_key_exists( 'enableGithubReleaseNotifications', $settings ) ) {
+		$settings['enableGithubReleaseNotifications'] = false;
+	}
+
 	return csqr_sanitize_settings( $settings );
 }
 
@@ -219,8 +227,294 @@ function csqr_add_settings_page() {
 		'csqr-settings',
 		'csqr_render_settings_page'
 	);
+
+	add_submenu_page(
+		'options-general.php',
+		__( 'QR Shortcode Builder', 'csqr' ),
+		__( 'QR Shortcode Builder', 'csqr' ),
+		'manage_options',
+		'csqr-shortcode-builder',
+		'csqr_render_shortcode_builder_page'
+	);
 }
 add_action( 'admin_menu', 'csqr_add_settings_page' );
+
+/**
+ * Get the GitHub repository slug used for opt-in release checks.
+ *
+ * @return string
+ */
+function csqr_get_github_repository() {
+	return (string) apply_filters( 'csqr_github_repository', 'CptNope/Client-Side-QR' );
+}
+
+/**
+ * Get a normalized version string.
+ *
+ * @param string $version Raw version.
+ * @return string
+ */
+function csqr_normalize_version( $version ) {
+	return ltrim( trim( (string) $version ), 'vV' );
+}
+
+/**
+ * Synchronize release-check scheduling based on opt-in status.
+ *
+ * @return void
+ */
+function csqr_sync_release_schedule() {
+	$settings = csqr_get_settings();
+	$enabled  = ! empty( $settings['enableGithubReleaseNotifications'] );
+	$next     = wp_next_scheduled( CSQR_RELEASE_CRON_HOOK );
+
+	if ( $enabled && ! $next ) {
+		wp_schedule_event( time() + HOUR_IN_SECONDS, 'twicedaily', CSQR_RELEASE_CRON_HOOK );
+	} elseif ( ! $enabled && $next ) {
+		wp_unschedule_event( $next, CSQR_RELEASE_CRON_HOOK );
+		delete_site_transient( CSQR_RELEASE_TRANSIENT );
+	}
+}
+add_action( 'init', 'csqr_sync_release_schedule' );
+
+/**
+ * Check the latest GitHub release when the site owner opts in.
+ *
+ * @return array<string, string>|null
+ */
+function csqr_check_github_release() {
+	$settings = csqr_get_settings();
+
+	if ( empty( $settings['enableGithubReleaseNotifications'] ) ) {
+		delete_site_transient( CSQR_RELEASE_TRANSIENT );
+		return null;
+	}
+
+	$response = wp_remote_get(
+		'https://api.github.com/repos/' . csqr_get_github_repository() . '/releases/latest',
+		array(
+			'timeout' => 10,
+			'headers' => array(
+				'Accept'     => 'application/vnd.github+json',
+				'User-Agent' => 'Client-Side-QR/' . CSQR_VERSION . '; ' . home_url( '/' ),
+			),
+		)
+	);
+
+	if ( is_wp_error( $response ) ) {
+		return null;
+	}
+
+	$body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+	if ( ! is_array( $body ) || empty( $body['tag_name'] ) ) {
+		return null;
+	}
+
+	$data = array(
+		'tag_name'    => sanitize_text_field( (string) $body['tag_name'] ),
+		'html_url'    => esc_url_raw( (string) ( $body['html_url'] ?? '' ) ),
+		'name'        => sanitize_text_field( (string) ( $body['name'] ?? '' ) ),
+		'published_at'=> sanitize_text_field( (string) ( $body['published_at'] ?? '' ) ),
+	);
+
+	set_site_transient( CSQR_RELEASE_TRANSIENT, $data, DAY_IN_SECONDS );
+
+	return $data;
+}
+add_action( CSQR_RELEASE_CRON_HOOK, 'csqr_check_github_release' );
+
+/**
+ * Show an admin notice when a newer GitHub release is available and the feature is enabled.
+ *
+ * @return void
+ */
+function csqr_maybe_render_release_notice() {
+	if ( ! is_admin() || ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$settings = csqr_get_settings();
+
+	if ( empty( $settings['enableGithubReleaseNotifications'] ) ) {
+		return;
+	}
+
+	$release = get_site_transient( CSQR_RELEASE_TRANSIENT );
+
+	if ( ! is_array( $release ) ) {
+		$release = csqr_check_github_release();
+	}
+
+	if ( empty( $release['tag_name'] ) ) {
+		return;
+	}
+
+	$latest_version = csqr_normalize_version( $release['tag_name'] );
+
+	if ( ! version_compare( $latest_version, CSQR_VERSION, '>' ) ) {
+		return;
+	}
+	?>
+	<div class="notice notice-info">
+		<p>
+			<?php
+			printf(
+				/* translators: 1: latest version, 2: current version */
+				esc_html__( 'A newer GitHub release is available for Client-Side QR Code Generator: %1$s (current version: %2$s).', 'csqr' ),
+				esc_html( $latest_version ),
+				esc_html( CSQR_VERSION )
+			);
+			?>
+			<?php if ( ! empty( $release['html_url'] ) ) : ?>
+				<a href="<?php echo esc_url( $release['html_url'] ); ?>" target="_blank" rel="noreferrer noopener"><?php esc_html_e( 'View release', 'csqr' ); ?></a>
+			<?php endif; ?>
+		</p>
+	</div>
+	<?php
+}
+add_action( 'admin_notices', 'csqr_maybe_render_release_notice' );
+
+/**
+ * Enqueue assets needed on plugin admin pages.
+ *
+ * @param string $hook_suffix Current admin page hook.
+ * @return void
+ */
+function csqr_admin_enqueue_assets( $hook_suffix ) {
+	$allowed_hooks = array( 'settings_page_csqr-settings', 'settings_page_csqr-shortcode-builder' );
+
+	if ( ! in_array( $hook_suffix, $allowed_hooks, true ) ) {
+		return;
+	}
+
+	wp_enqueue_style( 'csqr-style' );
+	wp_enqueue_script( 'csqr-script' );
+}
+add_action( 'admin_enqueue_scripts', 'csqr_admin_enqueue_assets' );
+
+/**
+ * Build a shortcode string from settings.
+ *
+ * @param array<string, mixed> $settings Shortcode settings.
+ * @return string
+ */
+function csqr_build_shortcode_from_settings( $settings ) {
+	$defaults   = csqr_get_default_settings();
+	$attributes = array();
+
+	foreach ( $settings as $key => $value ) {
+		if ( ! array_key_exists( $key, $defaults ) ) {
+			continue;
+		}
+
+		$default = $defaults[ $key ];
+
+		if ( is_bool( $default ) ) {
+			if ( (bool) $value !== (bool) $default ) {
+				$attributes[] = $key . '="' . ( $value ? 'true' : 'false' ) . '"';
+			}
+			continue;
+		}
+
+		if ( (string) $value !== (string) $default && '' !== (string) $value ) {
+			$attributes[] = $key . '="' . esc_attr( (string) $value ) . '"';
+		}
+	}
+
+	return '[client_side_qr' . ( $attributes ? ' ' . implode( ' ', $attributes ) : '' ) . ']';
+}
+
+/**
+ * Render a shortcode builder field row.
+ *
+ * @param string $name Field name.
+ * @param string $label Field label.
+ * @param string $field_html Field HTML.
+ * @return void
+ */
+function csqr_render_builder_row( $name, $label, $field_html ) {
+	?>
+	<tr>
+		<th scope="row"><label for="<?php echo esc_attr( $name ); ?>"><?php echo esc_html( $label ); ?></label></th>
+		<td><?php echo $field_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
+	</tr>
+	<?php
+}
+
+/**
+ * Render the classic editor shortcode builder page.
+ *
+ * @return void
+ */
+function csqr_render_shortcode_builder_page() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$defaults  = csqr_get_settings();
+	$values    = $defaults;
+	$shortcode = csqr_build_shortcode_from_settings( $defaults );
+	$preview   = csqr_render_qr_generator( $defaults );
+
+	if ( isset( $_POST['csqr_shortcode_builder_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['csqr_shortcode_builder_nonce'] ) ), 'csqr_shortcode_builder' ) ) {
+		$raw_values = array();
+
+		foreach ( array_keys( csqr_get_default_settings() ) as $key ) {
+			if ( isset( $_POST[ $key ] ) ) {
+				$raw_values[ $key ] = wp_unslash( $_POST[ $key ] );
+			}
+		}
+
+		foreach ( array( 'qrGradient', 'allowUserColor', 'allowUserSize', 'allowUserCorrectLevel', 'enableUrl', 'enableWifi', 'enableEmail', 'enableSms', 'enableVcard', 'enableCrypto', 'enablePaypal' ) as $boolean_key ) {
+			$raw_values[ $boolean_key ] = isset( $_POST[ $boolean_key ] );
+		}
+
+		$values    = csqr_sanitize_settings( wp_parse_args( $raw_values, $defaults ) );
+		$shortcode = csqr_build_shortcode_from_settings( $values );
+		$preview   = csqr_render_qr_generator( $values );
+	}
+	?>
+	<div class="wrap">
+		<h1><?php esc_html_e( 'QR Shortcode Builder', 'csqr' ); ?></h1>
+		<p><?php esc_html_e( 'Use this screen to configure frontend output for classic-editor or shortcode-based workflows, then copy the generated shortcode into a post, page, widget, or template area.', 'csqr' ); ?></p>
+		<form method="post">
+			<?php wp_nonce_field( 'csqr_shortcode_builder', 'csqr_shortcode_builder_nonce' ); ?>
+			<table class="form-table" role="presentation">
+				<tbody>
+					<?php
+					csqr_render_builder_row( 'qrColorDark', __( 'Foreground color 1', 'csqr' ), '<input id="qrColorDark" name="qrColorDark" type="text" class="regular-text" value="' . esc_attr( $values['qrColorDark'] ) . '" />' );
+					csqr_render_builder_row( 'qrColorDark2', __( 'Foreground color 2', 'csqr' ), '<input id="qrColorDark2" name="qrColorDark2" type="text" class="regular-text" value="' . esc_attr( $values['qrColorDark2'] ) . '" />' );
+					csqr_render_builder_row( 'qrColorLight', __( 'Background color', 'csqr' ), '<input id="qrColorLight" name="qrColorLight" type="text" class="regular-text" value="' . esc_attr( $values['qrColorLight'] ) . '" />' );
+					csqr_render_builder_row( 'qrSize', __( 'Size', 'csqr' ), '<input id="qrSize" name="qrSize" type="number" min="100" max="800" step="10" class="small-text" value="' . esc_attr( (string) $values['qrSize'] ) . '" />' );
+					csqr_render_builder_row( 'qrCorrectLevel', __( 'Error correction', 'csqr' ), '<select id="qrCorrectLevel" name="qrCorrectLevel"><option value="L"' . selected( $values['qrCorrectLevel'], 'L', false ) . '>' . esc_html__( 'Low (7%)', 'csqr' ) . '</option><option value="M"' . selected( $values['qrCorrectLevel'], 'M', false ) . '>' . esc_html__( 'Medium (15%)', 'csqr' ) . '</option><option value="Q"' . selected( $values['qrCorrectLevel'], 'Q', false ) . '>' . esc_html__( 'Quartile (25%)', 'csqr' ) . '</option><option value="H"' . selected( $values['qrCorrectLevel'], 'H', false ) . '>' . esc_html__( 'High (30%)', 'csqr' ) . '</option></select>' );
+					csqr_render_builder_row( 'qrDotStyle', __( 'Dot style', 'csqr' ), '<select id="qrDotStyle" name="qrDotStyle"><option value="square"' . selected( $values['qrDotStyle'], 'square', false ) . '>' . esc_html__( 'Square', 'csqr' ) . '</option><option value="dots"' . selected( $values['qrDotStyle'], 'dots', false ) . '>' . esc_html__( 'Dots', 'csqr' ) . '</option><option value="rounded"' . selected( $values['qrDotStyle'], 'rounded', false ) . '>' . esc_html__( 'Rounded', 'csqr' ) . '</option><option value="extra-rounded"' . selected( $values['qrDotStyle'], 'extra-rounded', false ) . '>' . esc_html__( 'Extra Rounded', 'csqr' ) . '</option><option value="classy"' . selected( $values['qrDotStyle'], 'classy', false ) . '>' . esc_html__( 'Classy', 'csqr' ) . '</option><option value="classy-rounded"' . selected( $values['qrDotStyle'], 'classy-rounded', false ) . '>' . esc_html__( 'Classy Rounded', 'csqr' ) . '</option></select>' );
+					csqr_render_builder_row( 'qrEyeStyle', __( 'Corner eye style', 'csqr' ), '<select id="qrEyeStyle" name="qrEyeStyle"><option value="square"' . selected( $values['qrEyeStyle'], 'square', false ) . '>' . esc_html__( 'Square', 'csqr' ) . '</option><option value="dot"' . selected( $values['qrEyeStyle'], 'dot', false ) . '>' . esc_html__( 'Dot', 'csqr' ) . '</option><option value="extra-rounded"' . selected( $values['qrEyeStyle'], 'extra-rounded', false ) . '>' . esc_html__( 'Extra Rounded', 'csqr' ) . '</option></select>' );
+					csqr_render_builder_row( 'qrEyeColor', __( 'Corner eye color', 'csqr' ), '<input id="qrEyeColor" name="qrEyeColor" type="text" class="regular-text" value="' . esc_attr( $values['qrEyeColor'] ) . '" />' );
+					csqr_render_builder_row( 'logoUrl', __( 'Logo URL', 'csqr' ), '<input id="logoUrl" name="logoUrl" type="url" class="regular-text code" value="' . esc_attr( $values['logoUrl'] ) . '" />' );
+					csqr_render_builder_row( 'qrGradient', __( 'Use gradient', 'csqr' ), '<label><input id="qrGradient" name="qrGradient" type="checkbox" value="1"' . checked( $values['qrGradient'], true, false ) . ' /> ' . esc_html__( 'Enable foreground gradient', 'csqr' ) . '</label>' );
+					csqr_render_builder_row( 'allowUserColor', __( 'Allow visitor color changes', 'csqr' ), '<label><input id="allowUserColor" name="allowUserColor" type="checkbox" value="1"' . checked( $values['allowUserColor'], true, false ) . ' /> ' . esc_html__( 'Allow users to change colors', 'csqr' ) . '</label>' );
+					csqr_render_builder_row( 'allowUserSize', __( 'Allow visitor size changes', 'csqr' ), '<label><input id="allowUserSize" name="allowUserSize" type="checkbox" value="1"' . checked( $values['allowUserSize'], true, false ) . ' /> ' . esc_html__( 'Allow users to change size', 'csqr' ) . '</label>' );
+					csqr_render_builder_row( 'allowUserCorrectLevel', __( 'Allow visitor error correction changes', 'csqr' ), '<label><input id="allowUserCorrectLevel" name="allowUserCorrectLevel" type="checkbox" value="1"' . checked( $values['allowUserCorrectLevel'], true, false ) . ' /> ' . esc_html__( 'Allow users to change error correction', 'csqr' ) . '</label>' );
+					csqr_render_builder_row( 'payloads', __( 'Enabled payload types', 'csqr' ), '<fieldset><label><input name="enableUrl" type="checkbox" value="1"' . checked( $values['enableUrl'], true, false ) . ' /> ' . esc_html__( 'URL / Text', 'csqr' ) . '</label><br /><label><input name="enableWifi" type="checkbox" value="1"' . checked( $values['enableWifi'], true, false ) . ' /> ' . esc_html__( 'WiFi', 'csqr' ) . '</label><br /><label><input name="enableVcard" type="checkbox" value="1"' . checked( $values['enableVcard'], true, false ) . ' /> ' . esc_html__( 'vCard', 'csqr' ) . '</label><br /><label><input name="enableEmail" type="checkbox" value="1"' . checked( $values['enableEmail'], true, false ) . ' /> ' . esc_html__( 'Email', 'csqr' ) . '</label><br /><label><input name="enableSms" type="checkbox" value="1"' . checked( $values['enableSms'], true, false ) . ' /> ' . esc_html__( 'SMS', 'csqr' ) . '</label><br /><label><input name="enableCrypto" type="checkbox" value="1"' . checked( $values['enableCrypto'], true, false ) . ' /> ' . esc_html__( 'Crypto', 'csqr' ) . '</label><br /><label><input name="enablePaypal" type="checkbox" value="1"' . checked( $values['enablePaypal'], true, false ) . ' /> ' . esc_html__( 'PayPal', 'csqr' ) . '</label></fieldset>' );
+					?>
+				</tbody>
+			</table>
+			<?php submit_button( __( 'Generate Shortcode', 'csqr' ) ); ?>
+		</form>
+
+		<h2><?php esc_html_e( 'Generated shortcode', 'csqr' ); ?></h2>
+		<p><?php esc_html_e( 'Copy this shortcode into the classic editor, a widget, or any shortcode-enabled area.', 'csqr' ); ?></p>
+		<textarea class="large-text code" rows="3" readonly onclick="this.select();"><?php echo esc_textarea( $shortcode ); ?></textarea>
+
+		<h2><?php esc_html_e( 'Preview', 'csqr' ); ?></h2>
+		<p><?php esc_html_e( 'This preview uses the same frontend renderer as the shortcode and block output.', 'csqr' ); ?></p>
+		<div style="max-width: 520px;">
+			<?php echo $preview; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+		</div>
+	</div>
+	<?php
+}
 
 /**
  * Render the settings page.
@@ -236,7 +530,7 @@ function csqr_render_settings_page() {
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Client-Side QR Code Generator', 'csqr' ); ?></h1>
-		<p><?php esc_html_e( 'Set lightweight defaults for new QR block and shortcode instances. Existing content can still override these values per instance.', 'csqr' ); ?></p>
+		<p><?php esc_html_e( 'Set lightweight defaults for new QR block and shortcode instances. These defaults apply to the frontend output for both Gutenberg blocks and classic-editor shortcode usage, while existing content can still override them per instance.', 'csqr' ); ?></p>
 
 		<form action="options.php" method="post">
 			<?php settings_fields( 'csqr_settings_group' ); ?>
@@ -283,10 +577,21 @@ function csqr_render_settings_page() {
 							<p class="description"><?php esc_html_e( 'If every payload type is disabled, URL / Text will be restored automatically so new instances always stay usable.', 'csqr' ); ?></p>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Optional GitHub release notices', 'csqr' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="<?php echo esc_attr( CSQR_OPTION_NAME ); ?>[enableGithubReleaseNotifications]" value="1" <?php checked( $settings['enableGithubReleaseNotifications'] ); ?> />
+								<?php esc_html_e( 'Check GitHub for newer releases and show an admin notice when one is available.', 'csqr' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'This is opt-in and uses the GitHub releases API only for administrators who enable it.', 'csqr' ); ?></p>
+						</td>
+					</tr>
 				</tbody>
 			</table>
 			<?php submit_button(); ?>
 		</form>
+		<p><a class="button button-secondary" href="<?php echo esc_url( admin_url( 'options-general.php?page=csqr-shortcode-builder' ) ); ?>"><?php esc_html_e( 'Open QR Shortcode Builder', 'csqr' ); ?></a></p>
 	</div>
 	<?php
 }
