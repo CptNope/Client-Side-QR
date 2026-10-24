@@ -1,8 +1,8 @@
-# Client-Side QR Code Generator
+# Anderson QR Code Generator
 
-Client-Side QR Code Generator is a WordPress plugin for creating privacy-friendly QR experiences directly in the browser. It supports a Gutenberg block and shortcode, keeps QR rendering on the client side, and gives site owners flexible controls for links, campaigns, contact sharing, WiFi access, and payment flows.
+Anderson QR Code Generator (formerly Client-Side QR Code Generator) is a WordPress plugin for creating privacy-friendly QR experiences directly in the browser. It supports a Gutenberg block and shortcode, keeps QR rendering on the client side, and gives site owners flexible controls for links, campaigns, contact sharing, WiFi access, and payment flows.
 
-Version: `4.1.4`
+Version: `4.2.0` · on WordPress.org as `anderson-qr-code-generator` (pending review)
 
 ## Why this plugin
 
@@ -48,8 +48,7 @@ Version: `4.1.4`
 - Classic-editor shortcode builder for admin-side shortcode configuration
 - Theme-aware interface shell that inherits site colors and fonts by default
 - Per-instance interface shell overrides in both the block editor and shortcode builder
-- Optional opt-in GitHub release notices for self-managed installs
-- Translation-ready strings with the `csqr` text domain
+- Translation-ready strings with the `anderson-qr-code-generator` text domain
 
 ## Plugin structure
 
@@ -58,7 +57,7 @@ Version: `4.1.4`
 - `assets/qr-block.js` - block editor controls and live preview
 - `assets/qr-style.css` - frontend styles and accessibility-focused UI states
 - `assets/vendor/qr-code-styling.js` - bundled QR rendering library
-- `languages/csqr.pot` - translation template for the `csqr` text domain
+- `languages/anderson-qr-code-generator.pot` - translation template for the `anderson-qr-code-generator` text domain
 - `readme.txt` - WordPress.org style plugin metadata
 - `.wordpress-org/` - banner, icon, and screenshot scaffold for WordPress.org assets
 - `THIRD_PARTY_NOTICES.md` - third-party attribution and compatibility notes
@@ -70,7 +69,7 @@ Version: `4.1.4`
 1. Copy this project into `wp-content/plugins/`.
 2. Ensure the folder contains `client-side-qr.php` and the `assets/` directory.
 3. Activate the plugin in `Plugins`.
-4. Optionally set global defaults in `Settings > Client-Side QR`.
+4. Optionally set global defaults in `Settings > QR Code Generator`.
 5. Use `Settings > QR Shortcode Builder` if you want to configure shortcode output visually for classic-editor workflows.
 
 ## Usage
@@ -78,7 +77,7 @@ Version: `4.1.4`
 ### Gutenberg block
 
 1. Open a post or page in the block editor.
-2. Insert the `Client-Side QR Code` block.
+2. Insert the `QR Code Generator` block.
 3. Configure design defaults, payload types, and optional end-user controls.
 4. Use the `Interface Shell` panel if you want the block to inherit the active theme or force custom shell colors and font-family values for this instance.
 5. Publish the page.
@@ -157,7 +156,7 @@ The shortcode remains backward compatible with the existing attribute names.
 
 ## Settings page
 
-The plugin includes a lightweight settings page at `Settings > Client-Side QR` for global defaults:
+The plugin includes a lightweight settings page at `Settings > QR Code Generator` for global defaults:
 
 - default QR size
 - default interface shell inheritance behavior
@@ -180,19 +179,23 @@ It can be used to:
 - preview frontend rendering from wp-admin
 - support classic-editor and shortcode-heavy workflows more comfortably
 
-## Release notices
+## Updates
 
-The plugin can optionally check GitHub for newer releases and show an admin notice when one is available.
+Version 4.2.0 removed the optional GitHub release notices. Once the plugin is on WordPress.org, updates arrive through **Dashboard → Updates** like any other plugin. Sites that ran an earlier GitHub build have the old scheduled check and its cache cleaned up automatically.
 
-- this feature is off by default
-- it must be enabled by an administrator
-- it is intended mainly for self-managed installs that track the GitHub repository directly
+## Building the WordPress.org zip
+
+```bash
+bash tools/build-wporg.sh            # → build/anderson-qr-code-generator.zip
+```
+
+It packages the current commit, leaving out design sources, tools and the roadmap (see `.gitattributes`), and checks that the three version numbers agree. CI runs WordPress's Plugin Check on the same build for every pull request.
 
 ## Architecture notes
 
 - The plugin bundles `qr-code-styling` locally instead of loading it from a CDN.
 - The block is dynamic and rendered through PHP for consistent frontend output.
-- The plugin loads translations from `languages/` and includes a generated `csqr.pot` file for translators.
+- Translations come from translate.wordpress.org once the plugin is listed; `languages/anderson-qr-code-generator.pot` is the template.
 - The frontend shell now inherits theme typography and text color more naturally by default for both block and shortcode output.
 - The code includes filters for defaults and instance settings so future add-ons can extend behavior without rewriting core free-plugin logic.
 
@@ -220,7 +223,7 @@ This plugin bundles `qr-code-styling` by Denys Kozak.
 - License: MIT
 - Source: <https://github.com/kozakdenys/qr-code-styling>
 
-See `THIRD_PARTY_NOTICES.md` for attribution details.
+See `THIRD_PARTY_NOTICES.md` for attribution details. The plugin zip carries the license as `assets/vendor/qr-code-styling-LICENSE.txt`. The bundled file is byte-for-byte the published 1.5.0 build (SHA-256 `9ffc5c7b…79254`, same as `https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js`).
 
 ## License
 

@@ -21,11 +21,17 @@ def load_font(size: int, bold: bool = False):
         candidates = [
             r"C:\Windows\Fonts\segoeuib.ttf",
             r"C:\Windows\Fonts\arialbd.ttf",
+            "/usr/share/fonts/opentype/inter/Inter-Bold.otf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+            "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
         ]
     else:
         candidates = [
             r"C:\Windows\Fonts\segoeui.ttf",
             r"C:\Windows\Fonts\arial.ttf",
+            "/usr/share/fonts/opentype/inter/Inter-Regular.otf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "/System/Library/Fonts/Supplemental/Arial.ttf",
         ]
 
     for candidate in candidates:
@@ -74,26 +80,33 @@ def create_banner(width, height, filename):
     draw = ImageDraw.Draw(image)
     draw_pattern(draw, width, height)
 
+    # Everything is laid out for 772x250 and scaled, so both banner sizes match.
+    k = width / 772
+
+    def sc(*values):
+        return tuple(int(round(v * k)) for v in values)
+
     shadow = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(shadow)
-    shadow_draw.rounded_rectangle((width - 315, 28, width - 40, height - 28), radius=28, fill=(23, 49, 59, 45))
-    shadow = shadow.filter(ImageFilter.GaussianBlur(12))
+    shadow_draw.rounded_rectangle((width - sc(315)[0], sc(28)[0], width - sc(40)[0], height - sc(28)[0]), radius=sc(28)[0], fill=(23, 49, 59, 45))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(12 * k))
     image.alpha_composite(shadow)
 
-    panel_box = (width - 330, 20, width - 30, height - 20)
-    rounded_rect(draw, panel_box, 28, WHITE, outline="#dce3e3", width=2)
-    rounded_rect(draw, (panel_box[0] + 18, panel_box[1] + 18, panel_box[2] - 18, panel_box[1] + 56), 18, "#eff4f2")
-    draw.ellipse((panel_box[0] + 32, panel_box[1] + 31, panel_box[0] + 42, panel_box[1] + 41), fill=MINT)
-    draw.ellipse((panel_box[0] + 48, panel_box[1] + 31, panel_box[0] + 58, panel_box[1] + 41), fill="#f0c36b")
-    draw.ellipse((panel_box[0] + 64, panel_box[1] + 31, panel_box[0] + 74, panel_box[1] + 41), fill="#e68a7a")
+    panel_box = (width - sc(330)[0], sc(20)[0], width - sc(30)[0], height - sc(20)[0])
+    rounded_rect(draw, panel_box, sc(28)[0], WHITE, outline="#dce3e3", width=sc(2)[0])
+    rounded_rect(draw, (panel_box[0] + sc(18)[0], panel_box[1] + sc(18)[0], panel_box[2] - sc(18)[0], panel_box[1] + sc(56)[0]), sc(18)[0], "#eff4f2")
+    for i, color in enumerate((MINT, "#f0c36b", "#e68a7a")):
+        x = panel_box[0] + sc(32 + 16 * i)[0]
+        y = panel_box[1] + sc(31)[0]
+        draw.ellipse((x, y, x + sc(10)[0], y + sc(10)[0]), fill=color)
 
-    qr_box = (panel_box[0] + 34, panel_box[1] + 78, panel_box[2] - 34, panel_box[1] + 238)
-    rounded_rect(draw, qr_box, 24, "#f7fbfa", outline="#dce8e8", width=2)
+    qr_box = (panel_box[0] + sc(34)[0], panel_box[1] + sc(78)[0], panel_box[2] - sc(34)[0], panel_box[1] + sc(238)[0])
+    rounded_rect(draw, qr_box, sc(24)[0], "#f7fbfa", outline="#dce8e8", width=sc(2)[0])
 
-    module = 18 if width < 1000 else 36
-    gap = 6 if width < 1000 else 10
-    origin_x = qr_box[0] + 18
-    origin_y = qr_box[1] + 18
+    module = sc(18)[0]
+    gap = sc(6)[0]
+    origin_x = qr_box[0] + sc(18)[0]
+    origin_y = qr_box[1] + sc(18)[0]
     modules = [
         (0, 0, 2, 2), (2, 0, 1, 1), (0, 2, 1, 1), (2, 2, 1, 1),
         (5, 0, 2, 2), (7, 0, 1, 1), (5, 2, 1, 1),
@@ -103,17 +116,14 @@ def create_banner(width, height, filename):
     ]
     draw_qr_modules(draw, origin_x, origin_y, module, gap, INK, modules)
 
-    ring_box = (qr_box[2] - module * 3 - 34, qr_box[3] - module * 3 - 30, qr_box[2] - 22, qr_box[3] - 18)
+    ring_box = (qr_box[2] - module * 3 - sc(34)[0], qr_box[3] - module * 3 - sc(30)[0], qr_box[2] - sc(22)[0], qr_box[3] - sc(18)[0])
     draw.ellipse(ring_box, outline=TEAL, width=max(5, module // 4))
-    inner = (
-        ring_box[0] + 16,
-        ring_box[1] + 16,
-        ring_box[2] - 16,
-        ring_box[3] - 16,
-    )
+    inner = (ring_box[0] + sc(16)[0], ring_box[1] + sc(16)[0], ring_box[2] - sc(16)[0], ring_box[3] - sc(16)[0])
     draw.ellipse(inner, fill=MINT)
-    draw.line((inner[0] + 18, (inner[1] + inner[3]) // 2, inner[2] - 18, (inner[1] + inner[3]) // 2), fill=WHITE, width=max(5, module // 3))
-    draw.line((((inner[0] + inner[2]) // 2), inner[1] + 18, ((inner[0] + inner[2]) // 2), inner[3] - 18), fill=WHITE, width=max(5, module // 3))
+    cx, cy = (inner[0] + inner[2]) // 2, (inner[1] + inner[3]) // 2
+    arm = (inner[2] - inner[0]) // 2 - sc(9)[0]
+    draw.line((cx - arm, cy, cx + arm, cy), fill=WHITE, width=max(3, module // 3))
+    draw.line((cx, cy - arm, cx, cy + arm), fill=WHITE, width=max(3, module // 3))
 
     eyebrow_font = load_font(17 if width < 1000 else 34, bold=False)
     title_font = load_font(30 if width < 1000 else 60, bold=True)
@@ -121,11 +131,22 @@ def create_banner(width, height, filename):
     chip_font = load_font(13 if width < 1000 else 22, bold=False)
 
     draw.text((34, 34), "Privacy-friendly WordPress QR workflows", fill=TEAL, font=eyebrow_font)
-    draw.text((34, 68 if width < 1000 else 84), "Client-Side QR", fill=INK, font=title_font)
+    draw.text((34, 68 if width < 1000 else 84), "Anderson QR", fill=INK, font=title_font)
     draw.text((34, 104 if width < 1000 else 150), "Code Generator", fill=INK, font=title_font)
 
-    body_text = "Generate styled QR codes in the browser for links, campaigns,\ncontact sharing, WiFi, and payments."
-    draw.multiline_text((34, 154 if width < 1000 else 250), body_text, fill=INK, font=body_font, spacing=8)
+    # Wrap the body text so it never runs under the QR panel on the right.
+    words = "Styled QR codes made in the browser for links, WiFi, contacts and payments.".split()
+    max_w = width - sc(330)[0] - sc(34)[0] - sc(24)[0]
+    lines, line = [], ""
+    for word in words:
+        test = (line + " " + word).strip()
+        if draw.textbbox((0, 0), test, font=body_font)[2] > max_w and line:
+            lines.append(line)
+            line = word
+        else:
+            line = test
+    lines.append(line)
+    draw.multiline_text((34, 148 if width < 1000 else 236), "\n".join(lines[:2]), fill=INK, font=body_font, spacing=6)
 
     chips_y = height - (48 if width < 1000 else 84)
     draw_feature_chips(draw, 34, chips_y, ["Block + Shortcode", "Client-Side", "Campaign Ready"], chip_font)
@@ -396,10 +417,6 @@ def main():
     create_banner(1544, 500, "banner-1544x500.png")
     create_icon(128, "icon-128x128.png")
     create_icon(256, "icon-256x256.png")
-    create_screenshot_frontend("screenshot-1.png")
-    create_screenshot_editor("screenshot-2.png")
-    create_screenshot_settings("screenshot-3.png")
-    create_screenshot_shortcode_builder("screenshot-4.png")
 
     print("Generated WordPress.org banner, icon, and screenshot assets.")
 

@@ -8,10 +8,10 @@ const targetFiles = [
 ];
 
 const patterns = [
-    /(?:__|esc_html__|esc_attr__)\(\s*'((?:\\'|[^'])*)'\s*,\s*'csqr'\s*\)/g,
-    /(?:__|esc_html__|esc_attr__)\(\s*"((?:\\"|[^"])*)"\s*,\s*"csqr"\s*\)/g,
-    /(?:_e|esc_html_e|esc_attr_e)\(\s*'((?:\\'|[^'])*)'\s*,\s*'csqr'\s*\)/g,
-    /(?:_e|esc_html_e|esc_attr_e)\(\s*"((?:\\"|[^"])*)"\s*,\s*"csqr"\s*\)/g
+    /(?:__|esc_html__|esc_attr__)\(\s*'((?:\\'|[^'])*)'\s*,\s*'anderson-qr-code-generator'\s*\)/g,
+    /(?:__|esc_html__|esc_attr__)\(\s*"((?:\\"|[^"])*)"\s*,\s*"anderson-qr-code-generator"\s*\)/g,
+    /(?:_e|esc_html_e|esc_attr_e)\(\s*'((?:\\'|[^'])*)'\s*,\s*'anderson-qr-code-generator'\s*\)/g,
+    /(?:_e|esc_html_e|esc_attr_e)\(\s*"((?:\\"|[^"])*)"\s*,\s*"anderson-qr-code-generator"\s*\)/g
 ];
 
 function unescapePoString(value) {
@@ -84,7 +84,7 @@ pot += '"Language-Team: LANGUAGE <LL@li.org>\\n"\n';
 pot += '"MIME-Version: 1.0\\n"\n';
 pot += '"Content-Type: text/plain; charset=UTF-8\\n"\n';
 pot += '"Content-Transfer-Encoding: 8bit\\n"\n';
-pot += '"X-Domain: csqr\\n"\n';
+pot += '"X-Domain: anderson-qr-code-generator\\n"\n';
 pot += '"X-Generator: tools/generate-pot.js\\n"\n\n';
 
 sortedMessages.forEach((message) => {
@@ -97,6 +97,6 @@ sortedMessages.forEach((message) => {
 });
 
 fs.mkdirSync(path.join(repoRoot, 'languages'), { recursive: true });
-fs.writeFileSync(path.join(repoRoot, 'languages', 'csqr.pot'), pot, 'utf8');
+fs.writeFileSync(path.join(repoRoot, 'languages', 'anderson-qr-code-generator.pot'), pot, 'utf8');
 
-console.log(`Generated languages/csqr.pot with ${sortedMessages.length} strings.`);
+console.log(`Generated languages/anderson-qr-code-generator.pot with ${sortedMessages.length} strings.`);

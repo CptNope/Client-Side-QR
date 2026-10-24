@@ -1,18 +1,18 @@
-=== Client-Side QR Code Generator ===
-Contributors: jeremyanderson
-Tags: qr code, qr generator, marketing, shortcode, block
+=== Anderson QR Code Generator ===
+Contributors: cptnope
+Tags: qr code, qr generator, vcard, wifi, block
 Requires at least: 6.0
-Tested up to: 6.8
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 4.1.4
+Stable tag: 4.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Generate privacy-friendly QR codes directly in the browser with a Gutenberg block and shortcode for links, campaigns, contact sharing, WiFi, and payment workflows.
+Styled QR codes made in the visitor's browser, with no outside service: links, WiFi, vCards, email, SMS and payments. Block and shortcode.
 
 == Description ==
 
-Client-Side QR Code Generator helps WordPress sites publish useful QR experiences without sending QR creation to a remote API. Rendering happens in the visitor's browser, which keeps the plugin lightweight and privacy-friendly while still supporting richer QR workflows.
+Anderson QR Code Generator helps WordPress sites publish useful QR experiences without sending QR creation to a remote API. Rendering happens in the visitor's browser, which keeps the plugin lightweight and privacy-friendly while still supporting richer QR workflows.
 
 = Key features =
 
@@ -27,7 +27,6 @@ Client-Side QR Code Generator helps WordPress sites publish useful QR experience
 - Classic-editor shortcode builder in wp-admin
 - Theme-aware interface shell that inherits site colors and fonts by default
 - Per-instance interface shell overrides in both the block editor and shortcode builder
-- Optional opt-in GitHub release notices for self-managed installs
 
 = Good fit for =
 
@@ -37,12 +36,28 @@ Client-Side QR Code Generator helps WordPress sites publish useful QR experience
 - WiFi onboarding pages
 - QR-driven marketing and site workflows
 
+= Free, open source, no account =
+
+Everything in the plugin is free. There's no paid version, no sign-up and no tracking. QR codes are drawn in the visitor's browser by a bundled copy of [qr-code-styling](https://github.com/kozakdenys/qr-code-styling), so nothing about them is sent anywhere. Development happens on [GitHub](https://github.com/CptNope/Client-Side-QR).
+
+= Need hands-on help? =
+
+The plugin is made by [Jeremy Anderson](https://jeremyanderson.tech/), who builds and looks after WordPress sites. For a custom QR workflow, a new site or a tool built for your business, [book a call](https://jeremyanderson.tech/book-a-call/) or see the [services](https://jeremyanderson.tech/services/).
+
 == Installation ==
 
 1. Upload the plugin folder to `/wp-content/plugins/`, or upload the ZIP file in `Plugins > Add New Plugin`.
 2. Activate the plugin through the `Plugins` screen.
-3. Optionally set plugin defaults in `Settings > Client-Side QR`.
-4. Add the `Client-Side QR Code` block or use the `[client_side_qr]` shortcode.
+3. Optionally set plugin defaults in `Settings > QR Code Generator`.
+4. Add the `QR Code Generator` block or use the `[client_side_qr]` shortcode.
+
+== Source code and third-party library ==
+
+The file `assets/vendor/qr-code-styling.js` is the unmodified, minified build of [qr-code-styling](https://github.com/kozakdenys/qr-code-styling) 1.5.0 by Denys Kozak (MIT license; the notice ships in `assets/vendor/qr-code-styling-LICENSE.txt`). Its human-readable source is at https://github.com/kozakdenys/qr-code-styling/tree/v1.5.0. Everything else in the plugin is unminified.
+
+== External services ==
+
+The plugin doesn't contact any outside service. If you set a logo image by web address, visitors' browsers load that image from the address you entered.
 
 == Frequently Asked Questions ==
 
@@ -78,6 +93,14 @@ Yes. The frontend shell inherits theme colors and fonts by default, and both the
 4. Shortcode builder for classic-editor workflows
 
 == Changelog ==
+
+= 4.2.0 =
+
+- Now on WordPress.org as Anderson QR Code Generator. Existing blocks, shortcodes and settings keep working.
+- Removed the optional GitHub release notices: updates now come through WordPress.org.
+- Translations load from WordPress.org (text domain `anderson-qr-code-generator`).
+- Documentation, Support and Hire the author links on the Plugins screen, and a short about footer on the plugin's settings pages.
+- The shortcode builder sanitizes every field as it's read.
 
 = 4.1.4 =
 
@@ -121,6 +144,10 @@ Yes. The frontend shell inherits theme colors and fonts by default, and both the
 - Added per-block payload type toggles.
 
 == Upgrade Notice ==
+
+= 4.2.0 =
+
+First WordPress.org release. Removes the optional GitHub release notices; updates now come through WordPress.org.
 
 = 4.1.4 =
 
