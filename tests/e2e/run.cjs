@@ -39,22 +39,36 @@ function ok(cond, label, detail) {
 
 /** Decode the code drawn inside `selector` (canvas). */
 async function decode(page, selector) {
-	return page.evaluate(async (sel) => {
-		const canvas = document.querySelector(sel + ' canvas');
-		if (!canvas) {
+	// Retry briefly (logos draw asynchronously) and try full and half size,
+	// like the plugin's own scan check.
+	for (let attempt = 0; attempt < 10; attempt++) {
+		const found = await page.evaluate(async (sel) => {
+			const canvas = document.querySelector(sel + ' canvas');
+			if (!canvas) {
+				return null;
+			}
+			const jsQR = await window.CSQR.loadDecoder();
+			for (const scale of [1, 0.5]) {
+				const c = document.createElement('canvas');
+				c.width = Math.round(canvas.width * scale);
+				c.height = Math.round(canvas.height * scale);
+				const ctx = c.getContext('2d');
+				ctx.fillStyle = '#fff';
+				ctx.fillRect(0, 0, c.width, c.height);
+				ctx.drawImage(canvas, 0, 0, c.width, c.height);
+				const r = jsQR(ctx.getImageData(0, 0, c.width, c.height).data, c.width, c.height);
+				if (r) {
+					return r.data;
+				}
+			}
 			return null;
+		}, selector);
+		if (found !== null) {
+			return found;
 		}
-		const jsQR = await window.CSQR.loadDecoder();
-		const c = document.createElement('canvas');
-		c.width = canvas.width;
-		c.height = canvas.height;
-		const ctx = c.getContext('2d');
-		ctx.fillStyle = '#fff';
-		ctx.fillRect(0, 0, c.width, c.height);
-		ctx.drawImage(canvas, 0, 0);
-		const r = jsQR(ctx.getImageData(0, 0, c.width, c.height).data, c.width, c.height);
-		return r ? r.data : null;
-	}, selector);
+		await page.waitForTimeout(400);
+	}
+	return null;
 }
 
 async function waitCheck(page, selector) {
