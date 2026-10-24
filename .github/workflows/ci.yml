@@ -70,7 +70,7 @@ jobs:
           --health-cmd="mysqladmin ping -proot"
           --health-interval=5s --health-timeout=5s --health-retries=20
     env:
-      SITE: ${{ github.workspace }}/../site
+      SITE: ${{ runner.temp }}/site
       BASE: http://127.0.0.1:8080
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
