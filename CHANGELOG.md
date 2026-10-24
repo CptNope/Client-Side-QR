@@ -2,6 +2,26 @@
 
 All notable changes to Anderson QR Code Generator (formerly Client-Side QR Code Generator) will be documented in this file.
 
+## [4.3.0] - Scan Check, Short Links And A Redesign
+### Added
+- **QR code block** (`csqr/code`) with variations for this page, guest WiFi, a contact card (filled in from your profile), a review link and short links; also `[qr_code]`.
+- **Scan check**: each code is decoded after drawing (bundled jsQR 1.4.0), plus contrast, inverted-color and transparency checks, with one-click fixes. Editors see it on published codes; visitors only see a warning when a code may not scan.
+- **Short links** at `/qr/<slug>` (post type `csqr_link`) that you can repoint later, with a scan count and last-scan time stored on your site. Bots and link previews aren't counted.
+- **Page QR codes**: optional code after the content of chosen post types, switchable per page from the editor or a classic meta box.
+- **Print-ready downloads**: printed size in cm or inches, 300 dpi PNG, sized SVG and a one-page PDF, with a scanning-distance hint.
+- Logos from the Media Library with automatic error correction and size limits.
+- **Saved styles** for blocks and shortcodes (`style="id"`).
+- `showTitle` option for the generator; heading is now an `h2`.
+- Browser tests (`tests/e2e/`) run in CI against a real WordPress.
+
+### Changed
+- Redesigned generator and code cards: the code sits on a white sheet with print crop marks, the form and code sit side by side when there's room, kinds of code are one scrolling row on phones, and touch targets are at least 44 px.
+- New top-level **QR Codes** admin menu (Settings, Short links, Saved styles, Shortcode builder); old Settings links redirect.
+- Email codes use `mailto:` for wider scanner support.
+
+### Fixed
+- WiFi and vCard values are escaped correctly (`;`, `,`, `:`, `"` and `\`).
+
 ## [4.2.0] - WordPress.org Release
 ### Changed
 - Renamed to **Anderson QR Code Generator** for the WordPress.org directory (slug and text domain `anderson-qr-code-generator`). The block (`csqr/generator`), the `[client_side_qr]` shortcode and saved settings are unchanged, so existing content keeps working.

@@ -6,3 +6,4 @@
 /.gitignore export-ignore
 /ROADMAP.md export-ignore
 /THIRD_PARTY_NOTICES.md export-ignore
+/tests export-ignore

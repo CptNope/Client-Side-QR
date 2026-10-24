@@ -38,3 +38,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## jsQR
+
+- Package: `jsqr` 1.4.0
+- Source: https://github.com/cozmo/jsQR
+- Author: Cosmo Wolfe
+- License: Apache License 2.0 (`assets/vendor/jsQR-LICENSE.txt`)
+- Use: the scan check reads each drawn code back in the browser. Loaded only when a code is checked. Bundled unmodified (`dist/jsQR.js`).

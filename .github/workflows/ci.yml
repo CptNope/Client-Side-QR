@@ -10,7 +10,8 @@ permissions:
   contents: read
 
 # Third-party actions are pinned to exact commits (tags can be moved).
-# checkout v5 = fbc6f39…, setup-php v2 = eb7c497…, plugin-check-action v1.1.9 = 10857da…
+# checkout v5 = fbc6f39…, setup-php v2 = eb7c497…, plugin-check-action v1.1.9 = 10857da…,
+# upload-artifact v4.6.2 = ea165f8…
 
 jobs:
   lint:
@@ -53,3 +54,58 @@ jobs:
         with:
           build-dir: './build/anderson-qr-code-generator'
           slug: 'anderson-qr-code-generator'
+
+  e2e:
+    name: Browser tests
+    needs: lint
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      SITE: ${{ github.workspace }}/../site
+      BASE: http://127.0.0.1:8080
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
+        with:
+          php-version: '8.3'
+          extensions: gd, mysqli
+          tools: wp-cli
+          coverage: none
+      - name: Build the WordPress.org zip
+        run: bash tools/build-wporg.sh build
+      - name: Install WordPress with the built plugin
+        run: |
+          mkdir -p "$SITE"
+          wp core download --path="$SITE" --quiet
+          wp config create --path="$SITE" --dbname=wordpress --dbuser=root --dbpass=root --dbhost=127.0.0.1 --quiet
+          wp core install --path="$SITE" --url="$BASE" --title="Test site" --admin_user=admin --admin_password=password --admin_email=ci@example.com --skip-email --quiet
+          wp plugin install build/anderson-qr-code-generator.zip --activate --path="$SITE"
+          wp rewrite structure '/%postname%/' --path="$SITE"
+          WP="wp --path=$SITE" bash tests/e2e/setup.sh "$RUNNER_TEMP/fixtures.json"
+      - name: Start the site
+        run: |
+          php -S 127.0.0.1:8080 -t "$SITE" tests/e2e/router.php > "$RUNNER_TEMP/php.log" 2>&1 &
+          for i in $(seq 1 30); do curl -fsS -o /dev/null "$BASE/" && exit 0; sleep 1; done
+          cat "$RUNNER_TEMP/php.log"; exit 1
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Run browser tests
+        run: CSQR_FIXTURES="$RUNNER_TEMP/fixtures.json" CSQR_SHOTS="$RUNNER_TEMP/shots" node tests/e2e/run.cjs "$BASE" admin password
+      - name: Keep screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: e2e-screenshots
+          path: ${{ runner.temp }}/shots
+          if-no-files-found: ignore
