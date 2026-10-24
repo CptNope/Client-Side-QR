@@ -27,7 +27,9 @@ $up  = wp_upload_dir();
 wp_mkdir_p( $up["path"] );
 $file = $up["path"] . "/csqr-test-logo.png";
 if ( ! file_put_contents( $file, base64_decode( "iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAIAAAC2BqGFAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABuUlEQVR42u3d0U1DMQwFUGqxBgwCc7FEOxeLMAkbUAk9x3Zy7jcS1weTtoimt7eP+4vkJxCABi2gQYMW0KAFNGjQAhq0gAYNWkCDFtCgQQto0AK6ZV5HtPz5/vr7C94/H81HuLX9T6WnuLPQ20H/27e5eCPoC4kbcreATiJuxV0MvYC4CXeco1zyHYs3unDgqtWOA5VLOsSByiVN4kzl9X3iWOXFreJk5ZXd4nDlZQ2D8pqe/h69xYPhlHVe0DYor+ns6Bh+dExc59TmNnryRs9d57z+NnrsRk9f56QpbPQWL1gkC3qPcyNjFhvt6AAtxdA7HdCXT2SjHR2gBTRo0AhAgxbQoEFfl/7vqiycyEY7OkBLPfROx/S1s9hoRwfoE06Py6ew0ZOPjulLndHfRg9/MJy71EnNbfT8p3cTlzqvcwztPa6to2OXV4ZTljq7Z2www4iGsc0kzbvFZvO0bRVbTtWwT2w8W6smsf2ETTpUXplZ8g6Bqh9zHLVWhb9Mbts9CTqV2/3R6dxuRM8Vd8d/IrpPrZAGT+9AC2jQAho0aAENWkCDBi2gQQto0KAFNGgBDRq0gB6ZXzuujjPG8EZQAAAAAElFTkSuQmCC" ) ) ) {
-	WP_CLI::error( "Could not write the test logo to $file" );
+	$why = error_get_last();
+	echo "::error title=Test logo::Could not write $file (" . ( $up["error"] ? $up["error"] : "" ) . " " . ( $why ? $why["message"] : "" ) . ")\n";
+	exit( 1 );
 }
 $att = wp_insert_attachment( array( "post_mime_type" => "image/png", "post_title" => "Logo", "post_status" => "inherit" ), $file );
 $logo = wp_get_attachment_url( $att );
