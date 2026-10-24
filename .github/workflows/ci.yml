@@ -87,13 +87,15 @@ jobs:
           mkdir -p "$SITE"
           wp core download --path="$SITE" --quiet
           wp config create --path="$SITE" --dbname=wordpress --dbuser=root --dbpass=root --dbhost=127.0.0.1 --quiet
+          # PHP's test server is single-threaded; WP-Cron's loopback would stall page assets.
+          wp config set DISABLE_WP_CRON true --raw --path="$SITE"
           wp core install --path="$SITE" --url="$BASE" --title="Test site" --admin_user=admin --admin_password=password --admin_email=ci@example.com --skip-email --quiet
           wp plugin install build/anderson-qr-code-generator.zip --activate --path="$SITE"
           wp rewrite structure '/%postname%/' --path="$SITE"
           WP="wp --path=$SITE" bash tests/e2e/setup.sh "$RUNNER_TEMP/fixtures.json"
       - name: Start the site
         run: |
-          php -S 127.0.0.1:8080 -t "$SITE" tests/e2e/router.php > "$RUNNER_TEMP/php.log" 2>&1 &
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8080 -t "$SITE" tests/e2e/router.php > "$RUNNER_TEMP/php.log" 2>&1 &
           for i in $(seq 1 30); do curl -fsS -o /dev/null "$BASE/" && exit 0; sleep 1; done
           cat "$RUNNER_TEMP/php.log"; exit 1
       - name: Install Playwright
