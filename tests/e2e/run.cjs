@@ -32,7 +32,7 @@ function ok(cond, label, detail) {
 		failures.push(label);
 		console.log('  ✗ ' + label + (detail !== undefined ? ' — got ' + JSON.stringify(detail) : ''));
 		if (process.env.GITHUB_ACTIONS) {
-			console.log('::error title=Browser test failed::' + label);
+			console.log('::error title=Browser test failed::' + label + (detail !== undefined ? ' — got ' + JSON.stringify(detail).slice(0, 500) : ''));
 		}
 	}
 }
@@ -194,7 +194,12 @@ async function shot(page, name) {
 	const styled = await page.$eval('.csqr-card', (n) => JSON.parse(n.getAttribute('data-csqr-design')));
 	ok(styled.qrColorDark === '#1d3a8a' && styled.logoUrl === fixtures.logo, 'block uses the saved style', styled);
 	await page.waitForTimeout(800); // logo loads
-	ok((await decode(page, '.csqr-card .csqr-sheet__code')) === 'https://example.com/brand', 'code with a logo still decodes');
+	const logoText = await decode(page, '.csqr-card .csqr-sheet__code');
+	ok(logoText === 'https://example.com/brand', 'code with a logo still decodes', logoText === 'https://example.com/brand' ? undefined : await page.evaluate(() => {
+		const c = document.querySelector('.csqr-card canvas');
+		const img = new Image();
+		return { decoded: null, canvas: c ? [c.width, c.height, c.style.width] : null, dpr: window.devicePixelRatio, check: document.querySelector('.csqr-card .csqr-check')?.textContent, design: document.querySelector('.csqr-card').getAttribute('data-csqr-design'), ua: navigator.userAgent };
+	}));
 	ok((await waitCheck(page, '.csqr-card')).level === 'ok', 'logo code passes the scan check');
 
 	console.log('== Shortcodes');
