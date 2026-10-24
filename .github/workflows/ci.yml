@@ -92,7 +92,7 @@ jobs:
           wp core install --path="$SITE" --url="$BASE" --title="Test site" --admin_user=admin --admin_password=password --admin_email=ci@example.com --skip-email --quiet
           wp plugin install build/anderson-qr-code-generator.zip --activate --path="$SITE"
           wp rewrite structure '/%postname%/' --path="$SITE"
-          WP="wp --path=$SITE" bash tests/e2e/setup.sh "$RUNNER_TEMP/fixtures.json"
+          WP="wp --path=$SITE" bash tests/e2e/setup.sh "$RUNNER_TEMP/fixtures.json" || { cat "$RUNNER_TEMP/fixtures.json"; exit 1; }
       - name: Start the site
         run: |
           PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8080 -t "$SITE" tests/e2e/router.php > "$RUNNER_TEMP/php.log" 2>&1 &
