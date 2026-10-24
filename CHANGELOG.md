@@ -1,6 +1,26 @@
 # Changelog
 
-All notable changes to the Client-Side QR Code Generator will be documented in this file.
+All notable changes to Anderson QR Code Generator (formerly Client-Side QR Code Generator) will be documented in this file.
+
+## [4.2.0] - WordPress.org Release
+### Changed
+- Renamed to **Anderson QR Code Generator** for the WordPress.org directory (slug and text domain `anderson-qr-code-generator`). The block (`csqr/generator`), the `[client_side_qr]` shortcode and saved settings are unchanged, so existing content keeps working.
+- The settings menu is now **Settings → QR Code Generator**, and the block is called **QR Code Generator** in the inserter.
+- Translations load from WordPress.org; the manual `load_plugin_textdomain()` call is gone and the template is `languages/anderson-qr-code-generator.pot`.
+- `readme.txt`: contributor `cptnope`, tested up to WordPress 7.1, a shorter summary, and sections on the bundled library's source and on external services (none).
+- WordPress.org banners show the new name; their layout now scales correctly at 1544×500 and the text no longer runs under the artwork. Screenshots are now taken from the real plugin instead of drawn mock-ups.
+
+### Removed
+- The optional GitHub release notices (WordPress.org plugins must update through WordPress.org). The old twice-daily check and its cache are removed automatically, and on uninstall.
+- Prebuilt zips in `dist/` from the repository.
+
+### Added
+- Documentation, Support and Hire the author links on the Plugins screen, and a short about footer on the plugin's two settings pages.
+- `tools/build-wporg.sh`, which builds the WordPress.org zip with sanity checks, and a CI workflow running PHP 7.4–8.5 syntax checks and WordPress's Plugin Check.
+- The bundled library's MIT license inside the zip (`assets/vendor/qr-code-styling-LICENSE.txt`).
+
+### Fixed
+- The shortcode builder sanitizes each submitted field as it's read (Plugin Check warning).
 
 ## [4.1.4] - Theme Override And Editor Reliability Fixes
 ### Added

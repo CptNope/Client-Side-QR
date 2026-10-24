@@ -316,3 +316,17 @@ textarea.csqr-input {
         flex-direction: column;
     }
 }
+
+/* "About" footer on the plugin's own admin pages. */
+.csqr-about {
+	margin: 32px 0 8px;
+	padding: 14px 18px;
+	max-width: 80ch;
+	border: 1px solid #dcdcde;
+	background: #fff;
+	color: #50575e;
+	font-size: 13px;
+}
+.csqr-about p { margin: 0 0 8px; }
+.csqr-about strong { color: #1d2327; }
+.csqr-about-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin-bottom: 0 !important; }

@@ -71,10 +71,10 @@
 
     blocks.registerBlockType('csqr/generator', {
         apiVersion: 2,
-        title: __('Client-Side QR Code', 'csqr'),
+        title: __('QR Code Generator', 'anderson-qr-code-generator'),
         icon: 'smartphone',
         category: 'widgets',
-        description: __('Render privacy-friendly QR forms that generate in the browser for links, campaigns, contact details, WiFi, and payment flows.', 'csqr'),
+        description: __('Render privacy-friendly QR forms that generate in the browser for links, campaigns, contact details, WiFi, and payment flows.', 'anderson-qr-code-generator'),
         attributes: {
             qrColorDark: { type: 'string', default: defaults.qrColorDark },
             qrColorDark2: { type: 'string', default: defaults.qrColorDark2 },
@@ -201,30 +201,30 @@
 
             return el(Fragment, {},
                 el(InspectorControls, {},
-                    el(PanelBody, { title: __('Design Defaults', 'csqr'), initialOpen: true },
+                    el(PanelBody, { title: __('Design Defaults', 'anderson-qr-code-generator'), initialOpen: true },
                         el(SelectControl, {
-                            label: __('Dot style', 'csqr'),
+                            label: __('Dot style', 'anderson-qr-code-generator'),
                             value: attributes.qrDotStyle,
                             options: [
-                                { label: __('Square', 'csqr'), value: 'square' },
-                                { label: __('Dots', 'csqr'), value: 'dots' },
-                                { label: __('Rounded', 'csqr'), value: 'rounded' },
-                                { label: __('Extra Rounded', 'csqr'), value: 'extra-rounded' },
-                                { label: __('Classy', 'csqr'), value: 'classy' },
-                                { label: __('Classy Rounded', 'csqr'), value: 'classy-rounded' }
+                                { label: __('Square', 'anderson-qr-code-generator'), value: 'square' },
+                                { label: __('Dots', 'anderson-qr-code-generator'), value: 'dots' },
+                                { label: __('Rounded', 'anderson-qr-code-generator'), value: 'rounded' },
+                                { label: __('Extra Rounded', 'anderson-qr-code-generator'), value: 'extra-rounded' },
+                                { label: __('Classy', 'anderson-qr-code-generator'), value: 'classy' },
+                                { label: __('Classy Rounded', 'anderson-qr-code-generator'), value: 'classy-rounded' }
                             ],
                             onChange: function (value) {
                                 setAttributes({ qrDotStyle: value });
                             }
                         }),
                         el(ToggleControl, {
-                            label: __('Use a foreground gradient', 'csqr'),
+                            label: __('Use a foreground gradient', 'anderson-qr-code-generator'),
                             checked: attributes.qrGradient,
                             onChange: function (value) {
                                 setAttributes({ qrGradient: value });
                             }
                         }),
-                        el('p', { className: 'components-base-control__label' }, __('Foreground color 1', 'csqr')),
+                        el('p', { className: 'components-base-control__label' }, __('Foreground color 1', 'anderson-qr-code-generator')),
                         el(ColorPicker, {
                             color: attributes.qrColorDark,
                             onChangeComplete: function (value) {
@@ -233,7 +233,7 @@
                             disableAlpha: true
                         }),
                         attributes.qrGradient && el(Fragment, {},
-                            el('p', { className: 'components-base-control__label' }, __('Foreground color 2', 'csqr')),
+                            el('p', { className: 'components-base-control__label' }, __('Foreground color 2', 'anderson-qr-code-generator')),
                             el(ColorPicker, {
                                 color: attributes.qrColorDark2,
                                 onChangeComplete: function (value) {
@@ -243,18 +243,18 @@
                             })
                         ),
                         el(SelectControl, {
-                            label: __('Corner eye style', 'csqr'),
+                            label: __('Corner eye style', 'anderson-qr-code-generator'),
                             value: attributes.qrEyeStyle,
                             options: [
-                                { label: __('Square', 'csqr'), value: 'square' },
-                                { label: __('Dot', 'csqr'), value: 'dot' },
-                                { label: __('Extra Rounded', 'csqr'), value: 'extra-rounded' }
+                                { label: __('Square', 'anderson-qr-code-generator'), value: 'square' },
+                                { label: __('Dot', 'anderson-qr-code-generator'), value: 'dot' },
+                                { label: __('Extra Rounded', 'anderson-qr-code-generator'), value: 'extra-rounded' }
                             ],
                             onChange: function (value) {
                                 setAttributes({ qrEyeStyle: value });
                             }
                         }),
-                        el('p', { className: 'components-base-control__label' }, __('Corner eye color', 'csqr')),
+                        el('p', { className: 'components-base-control__label' }, __('Corner eye color', 'anderson-qr-code-generator')),
                         el(ColorPicker, {
                             color: attributes.qrEyeColor || '#111111',
                             onChangeComplete: function (value) {
@@ -262,7 +262,7 @@
                             },
                             disableAlpha: true
                         }),
-                        el('p', { className: 'components-base-control__label' }, __('Background color', 'csqr')),
+                        el('p', { className: 'components-base-control__label' }, __('Background color', 'anderson-qr-code-generator')),
                         el(ColorPicker, {
                             color: attributes.qrColorLight,
                             onChangeComplete: function (value) {
@@ -271,7 +271,7 @@
                             disableAlpha: true
                         }),
                         el(RangeControl, {
-                            label: __('Default output size (px)', 'csqr'),
+                            label: __('Default output size (px)', 'anderson-qr-code-generator'),
                             value: attributes.qrSize,
                             min: 100,
                             max: 800,
@@ -281,19 +281,19 @@
                             }
                         }),
                         el(SelectControl, {
-                            label: __('Error correction level', 'csqr'),
+                            label: __('Error correction level', 'anderson-qr-code-generator'),
                             value: attributes.qrCorrectLevel,
                             options: [
-                                { label: __('Low (7%)', 'csqr'), value: 'L' },
-                                { label: __('Medium (15%)', 'csqr'), value: 'M' },
-                                { label: __('Quartile (25%)', 'csqr'), value: 'Q' },
-                                { label: __('High (30%)', 'csqr'), value: 'H' }
+                                { label: __('Low (7%)', 'anderson-qr-code-generator'), value: 'L' },
+                                { label: __('Medium (15%)', 'anderson-qr-code-generator'), value: 'M' },
+                                { label: __('Quartile (25%)', 'anderson-qr-code-generator'), value: 'Q' },
+                                { label: __('High (30%)', 'anderson-qr-code-generator'), value: 'H' }
                             ],
                             onChange: function (value) {
                                 setAttributes({ qrCorrectLevel: value });
                             }
                         }),
-                        el('p', { className: 'components-base-control__label' }, __('Center logo', 'csqr')),
+                        el('p', { className: 'components-base-control__label' }, __('Center logo', 'anderson-qr-code-generator')),
                         el(MediaUploadCheck, {},
                             el(MediaUpload, {
                                 onSelect: function (media) {
@@ -305,7 +305,7 @@
                                     return el(Button, {
                                         isSecondary: true,
                                         onClick: obj.open
-                                    }, attributes.logoUrl ? __('Change logo', 'csqr') : __('Upload logo', 'csqr'));
+                                    }, attributes.logoUrl ? __('Change logo', 'anderson-qr-code-generator') : __('Upload logo', 'anderson-qr-code-generator'));
                                 }
                             })
                         ),
@@ -315,18 +315,18 @@
                             onClick: function () {
                                 setAttributes({ logoUrl: '' });
                             }
-                        }, __('Remove logo', 'csqr'))
+                        }, __('Remove logo', 'anderson-qr-code-generator'))
                 ),
-                    el(PanelBody, { title: __('Interface Shell', 'csqr'), initialOpen: false },
+                    el(PanelBody, { title: __('Interface Shell', 'anderson-qr-code-generator'), initialOpen: false },
                         el(ToggleControl, {
-                            label: __('Inherit theme colors', 'csqr'),
+                            label: __('Inherit theme colors', 'anderson-qr-code-generator'),
                             checked: attributes.uiUseThemeColors,
                             onChange: function (value) {
                                 setAttributes({ uiUseThemeColors: value });
                             }
                         }),
                         !attributes.uiUseThemeColors && el(Fragment, {},
-                            el('p', { className: 'components-base-control__label' }, __('Shell background color', 'csqr')),
+                            el('p', { className: 'components-base-control__label' }, __('Shell background color', 'anderson-qr-code-generator')),
                             el(ColorPicker, {
                                 color: attributes.uiSurfaceColor || '#ffffff',
                                 onChangeComplete: function (value) {
@@ -334,7 +334,7 @@
                                 },
                                 disableAlpha: true
                             }),
-                            el('p', { className: 'components-base-control__label' }, __('Shell text color', 'csqr')),
+                            el('p', { className: 'components-base-control__label' }, __('Shell text color', 'anderson-qr-code-generator')),
                             el(ColorPicker, {
                                 color: attributes.uiTextColor || '#111111',
                                 onChangeComplete: function (value) {
@@ -342,7 +342,7 @@
                                 },
                                 disableAlpha: true
                             }),
-                            el('p', { className: 'components-base-control__label' }, __('Shell accent color', 'csqr')),
+                            el('p', { className: 'components-base-control__label' }, __('Shell accent color', 'anderson-qr-code-generator')),
                             el(ColorPicker, {
                                 color: attributes.uiAccentColor || '#007cba',
                                 onChangeComplete: function (value) {
@@ -352,90 +352,90 @@
                             })
                         ),
                         el(ToggleControl, {
-                            label: __('Inherit theme font', 'csqr'),
+                            label: __('Inherit theme font', 'anderson-qr-code-generator'),
                             checked: attributes.uiUseThemeFont,
                             onChange: function (value) {
                                 setAttributes({ uiUseThemeFont: value });
                             }
                         }),
                         !attributes.uiUseThemeFont && el(TextControl, {
-                            label: __('Shell font-family override', 'csqr'),
+                            label: __('Shell font-family override', 'anderson-qr-code-generator'),
                             value: attributes.uiFontFamily || '',
                             onChange: function (value) {
                                 setAttributes({ uiFontFamily: value });
                             },
-                            help: __('Example: "Source Serif 4", Georgia, serif', 'csqr')
+                            help: __('Example: "Source Serif 4", Georgia, serif', 'anderson-qr-code-generator')
                         })
                     ),
-                    el(PanelBody, { title: __('Available Payload Types', 'csqr'), initialOpen: false },
+                    el(PanelBody, { title: __('Available Payload Types', 'anderson-qr-code-generator'), initialOpen: false },
                         el(ToggleControl, {
-                            label: __('URL / Text', 'csqr'),
+                            label: __('URL / Text', 'anderson-qr-code-generator'),
                             checked: attributes.enableUrl,
                             onChange: function (value) {
                                 setPayloadToggle('enableUrl', value);
                             }
                         }),
                         el(ToggleControl, {
-                            label: __('WiFi network', 'csqr'),
+                            label: __('WiFi network', 'anderson-qr-code-generator'),
                             checked: attributes.enableWifi,
                             onChange: function (value) {
                                 setPayloadToggle('enableWifi', value);
                             }
                         }),
                         el(ToggleControl, {
-                            label: __('vCard contact', 'csqr'),
+                            label: __('vCard contact', 'anderson-qr-code-generator'),
                             checked: attributes.enableVcard,
                             onChange: function (value) {
                                 setPayloadToggle('enableVcard', value);
                             }
                         }),
                         el(ToggleControl, {
-                            label: __('Email', 'csqr'),
+                            label: __('Email', 'anderson-qr-code-generator'),
                             checked: attributes.enableEmail,
                             onChange: function (value) {
                                 setPayloadToggle('enableEmail', value);
                             }
                         }),
                         el(ToggleControl, {
-                            label: __('SMS', 'csqr'),
+                            label: __('SMS', 'anderson-qr-code-generator'),
                             checked: attributes.enableSms,
                             onChange: function (value) {
                                 setPayloadToggle('enableSms', value);
                             }
                         }),
                         el(ToggleControl, {
-                            label: __('Crypto wallet', 'csqr'),
+                            label: __('Crypto wallet', 'anderson-qr-code-generator'),
                             checked: attributes.enableCrypto,
                             onChange: function (value) {
                                 setPayloadToggle('enableCrypto', value);
                             }
                         }),
                         el(ToggleControl, {
-                            label: __('PayPal.me', 'csqr'),
+                            label: __('PayPal.me', 'anderson-qr-code-generator'),
                             checked: attributes.enablePaypal,
                             onChange: function (value) {
                                 setPayloadToggle('enablePaypal', value);
                             }
                         }),
-                        getEnabledPayloadCount(attributes) <= 1 && el(Notice, { status: 'info', isDismissible: false }, __('At least one payload type stays enabled so the block remains usable.', 'csqr'))
+                        getEnabledPayloadCount(attributes) <= 1 && el(Notice, { status: 'info', isDismissible: false }, __('At least one payload type stays enabled so the block remains usable.', 'anderson-qr-code-generator'))
                     ),
-                    el(PanelBody, { title: __('End-User Controls', 'csqr'), initialOpen: false },
+                    el(PanelBody, { title: __('End-User Controls', 'anderson-qr-code-generator'), initialOpen: false },
                         el(ToggleControl, {
-                            label: __('Allow visitors to change colors', 'csqr'),
+                            label: __('Allow visitors to change colors', 'anderson-qr-code-generator'),
                             checked: attributes.allowUserColor,
                             onChange: function (value) {
                                 setAttributes({ allowUserColor: value });
                             }
                         }),
                         el(ToggleControl, {
-                            label: __('Allow visitors to change size', 'csqr'),
+                            label: __('Allow visitors to change size', 'anderson-qr-code-generator'),
                             checked: attributes.allowUserSize,
                             onChange: function (value) {
                                 setAttributes({ allowUserSize: value });
                             }
                         }),
                         el(ToggleControl, {
-                            label: __('Allow visitors to change error correction', 'csqr'),
+                            label: __('Allow visitors to change error correction', 'anderson-qr-code-generator'),
                             checked: attributes.allowUserCorrectLevel,
                             onChange: function (value) {
                                 setAttributes({ allowUserCorrectLevel: value });
@@ -444,8 +444,8 @@
                     )
                 ),
                 el('div', blockProps,
-                    el('h4', { style: { margin: '0 0 8px' } }, __('Client-Side QR Code Preview', 'csqr')),
-                    el('p', { style: { margin: '0 0 16px', color: 'inherit', opacity: '0.8' } }, __('The public block renders a fully interactive client-side QR form. This preview reflects your current design defaults and shell styling.', 'csqr')),
+                    el('h4', { style: { margin: '0 0 8px' } }, __('QR code preview', 'anderson-qr-code-generator')),
+                    el('p', { style: { margin: '0 0 16px', color: 'inherit', opacity: '0.8' } }, __('The public block renders a fully interactive client-side QR form. This preview reflects your current design defaults and shell styling.', 'anderson-qr-code-generator')),
                     el('div', {
                         ref: qrRef,
                         style: {
@@ -454,7 +454,7 @@
                             alignItems: 'center',
                             minHeight: '200px'
                         }
-                    }, __('Loading preview…', 'csqr'))
+                    }, __('Loading preview…', 'anderson-qr-code-generator'))
                 )
             );
         },

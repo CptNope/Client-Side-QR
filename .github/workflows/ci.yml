@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Third-party actions are pinned to exact commits (tags can be moved).
+# checkout v5 = fbc6f39…, setup-php v2 = eb7c497…, plugin-check-action v1.1.9 = 10857da…
+
+jobs:
+  lint:
+    name: PHP ${{ matrix.php }} syntax
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Lint every PHP file
+        run: find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+
+  versions:
+    name: Versions agree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - run: |
+          V=$(sed -n 's/^ \* Version: *//p' client-side-qr.php | tr -d '[:space:]')
+          grep -q "define( 'CSQR_VERSION', '$V' );" client-side-qr.php || { echo "::error file=client-side-qr.php::CSQR_VERSION isn't $V."; exit 1; }
+          grep -q "^Stable tag: $V$" readme.txt || { echo "::error file=readme.txt::readme.txt Stable tag isn't $V."; exit 1; }
+          grep -q "^## \[$V\]" CHANGELOG.md || { echo "::error file=CHANGELOG.md::CHANGELOG.md has no entry for $V."; exit 1; }
+
+  plugin-check:
+    name: WordPress.org Plugin Check
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Build the WordPress.org zip
+        run: bash tools/build-wporg.sh build
+      # The same checks the WordPress.org review team runs.
+      - uses: WordPress/plugin-check-action@10857da14b6c2246d15402b3e69f777edcf8c12e
+        with:
+          build-dir: './build/anderson-qr-code-generator'
+          slug: 'anderson-qr-code-generator'
