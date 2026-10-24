@@ -209,6 +209,15 @@ async function shot(page, name) {
 		return { decoded: null, canvas: c ? [c.width, c.height, c.style.width] : null, dpr: window.devicePixelRatio, check: document.querySelector('.csqr-card .csqr-check')?.textContent, design: document.querySelector('.csqr-card').getAttribute('data-csqr-design'), ua: navigator.userAgent };
 	}));
 	ok(logoCheck.level === 'ok', 'logo code passes the scan check', logoCheck);
+	const broken = await page.evaluate(async () => {
+		const el = document.createElement('div');
+		document.body.appendChild(el);
+		const d = window.CSQR.design({ logoUrl: location.origin + '/wp-content/uploads/missing-logo.png' });
+		const qr = window.CSQR.render(el, d, 'https://example.com/broken', 200);
+		const r = await window.CSQR.check(qr, 'https://example.com/broken', d);
+		return { level: r.level, ids: r.issues.map((i) => i.code), drawn: !!el.querySelector('canvas') };
+	});
+	ok(broken.drawn && broken.level === 'warn' && broken.ids.includes('logo'), 'a logo that doesn\'t load is reported, and the code still draws', broken);
 
 	console.log('== Shortcodes');
 	await page.goto(fixtures.shortcodes);

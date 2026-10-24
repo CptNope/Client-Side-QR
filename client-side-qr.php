@@ -424,6 +424,7 @@ function csqr_core_strings() {
 		'checkUnreadable'   => __( 'A phone camera can’t read this code. The styling hides too much of it.', 'anderson-qr-code-generator' ),
 		'checkMismatch'     => __( 'This code reads back as different text. Simplify the styling.', 'anderson-qr-code-generator' ),
 		'checkSmall'        => __( 'It scans close up, but may fail when printed small or seen from a distance.', 'anderson-qr-code-generator' ),
+		'checkLogoMissing'  => __( 'The logo couldn’t be loaded, so the code is shown without it. Check its address, or choose it from your Media Library.', 'anderson-qr-code-generator' ),
 		'checkLogoBlocked'  => __( 'Couldn’t test this code: its logo is on another site that doesn’t allow it. Choose the logo from your Media Library.', 'anderson-qr-code-generator' ),
 		'checkFailed'       => __( 'Couldn’t test this code in this browser.', 'anderson-qr-code-generator' ),
 		'fixInverted'       => __( 'Swap the colors', 'anderson-qr-code-generator' ),

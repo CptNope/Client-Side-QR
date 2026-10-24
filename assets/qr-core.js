@@ -226,6 +226,42 @@
 		return d.logo ? 'H' : d.level;
 	}
 
+	/*
+	 * The bundled library waits for a logo's onload and never gives up, so a
+	 * broken logo address would leave the code undrawn. Probe each logo once;
+	 * codes are drawn without a logo that doesn't load.
+	 */
+	var logoState = {};
+
+	function probeLogo(url) {
+		if (logoState[url] === 'ok' || logoState[url] === 'bad') {
+			return Promise.resolve(logoState[url] === 'ok');
+		}
+		if (!logoState[url]) {
+			logoState[url] = new Promise(function (resolve) {
+				var img = new Image();
+				var done = function (ok) {
+					window.clearTimeout(timer);
+					logoState[url] = ok ? 'ok' : 'bad';
+					resolve(ok);
+				};
+				var timer = window.setTimeout(function () {
+					done(false);
+				}, 10000);
+				img.crossOrigin = 'anonymous';
+				img.onload = function () {
+					done(img.naturalWidth > 0);
+				};
+				img.onerror = function () {
+					done(false);
+				};
+				img.src = url;
+			});
+		}
+		return logoState[url];
+	}
+	CSQR.probeLogo = probeLogo;
+
 	function options(d, text, width, type) {
 		var opts = {
 			type: type || 'canvas',
@@ -246,7 +282,7 @@
 				colorStops: [{ offset: 0, color: d.dark }, { offset: 1, color: d.dark2 }]
 			};
 		}
-		if (d.logo) {
+		if (d.logo && logoState[d.logo] !== 'bad') {
 			opts.image = d.logo;
 			opts.imageOptions = { crossOrigin: 'anonymous', margin: Math.max(2, Math.round(width / 120)), imageSize: d.logoSize, hideBackgroundDots: true };
 		}
@@ -268,18 +304,46 @@
 
 	CSQR.make = make;
 
-	/** Draw a code into an element. Returns the instance. */
+	/**
+	 * Draw a code into an element. Returns the instance; when a logo is
+	 * involved, instance.csqrReady resolves to the instance that ends up on
+	 * screen (redrawn without the logo if it doesn't load).
+	 */
 	CSQR.render = function (el, d, text, width) {
-		el.innerHTML = '';
-		var qr = make(d, text, width || 256);
-		qr.append(el);
-		var node = el.querySelector('canvas, svg');
-		if (node) {
-			node.setAttribute('aria-hidden', 'true');
-			node.style.maxWidth = '100%';
-			node.style.height = 'auto';
+		function draw(withLogo) {
+			var shown = withLogo ? d : Object.assign({}, d, { logo: '' });
+			el.innerHTML = '';
+			var instance = make(shown, text, width || 256);
+			instance.append(el);
+			var node = el.querySelector('canvas, svg');
+			if (node) {
+				node.setAttribute('aria-hidden', 'true');
+				node.style.maxWidth = '100%';
+				node.style.height = 'auto';
+			}
+			return instance;
 		}
-		return qr;
+		if (!d.logo || logoState[d.logo] === 'ok' || logoState[d.logo] === 'bad') {
+			el.csqrDrawToken = (el.csqrDrawToken || 0) + 1;
+			var qr = draw(d.logo && logoState[d.logo] === 'ok');
+			qr.csqrLogoFailed = !!d.logo && logoState[d.logo] === 'bad';
+			return qr;
+		}
+		// Unknown logo: show the code straight away, add the logo once it loads.
+		var token = (el.csqrDrawToken || 0) + 1;
+		el.csqrDrawToken = token;
+		var first = draw(false);
+		first.csqrReady = probeLogo(d.logo).then(function (ok) {
+			if (el.csqrDrawToken !== token) {
+				return first; // Something newer was drawn here meanwhile.
+			}
+			if (!ok) {
+				first.csqrLogoFailed = true;
+				return first;
+			}
+			return draw(true);
+		});
+		return first;
 	};
 
 	/* ------------------------------------------------------------------ */
@@ -378,7 +442,24 @@
 	 * issues: [{code, severity, message, fix: {label, apply(design) -> design}}]}.
 	 */
 	CSQR.check = function (qr, text, d) {
+		if (qr && qr.csqrReady) {
+			var pending = qr.csqrReady;
+			qr.csqrReady = null;
+			return pending.then(function (final) {
+				return CSQR.check(final, text, d);
+			});
+		}
 		var issues = [];
+		if (qr && qr.csqrLogoFailed) {
+			issues.push(issue('logo', 'warn', t('checkLogoMissing', 'The logo couldn’t be loaded, so the code is shown without it. Check its address, or choose it from your Media Library.'), {
+				label: t('fixLogoRemove', 'Remove the logo'),
+				apply: function (x) {
+					x.logo = '';
+					return x;
+				}
+			}));
+			d = Object.assign({}, d, { logo: '' });
+		}
 		var bg = d.transparent ? '#ffffff' : d.light;
 		var darks = [d.dark];
 		if (d.gradient) {
@@ -697,7 +778,7 @@
 	 * (0 = screen size), name}. Resolves to the Blob (and saves it unless
 	 * opts.save === false).
 	 */
-	CSQR.download = function (d, text, opts) {
+	var _download = function (d, text, opts) {
 		opts = opts || {};
 		var dpi = 300;
 		var cm = parseFloat(opts.cm) || 0;
@@ -744,13 +825,25 @@
 			return blob;
 		});
 	};
+	// Wait until the logo is known to load (or not) so the library never hangs.
+	CSQR.download = function (d, text, opts) {
+		return (d.logo ? probeLogo(d.logo) : Promise.resolve()).then(function () {
+			return _download(d, text, opts);
+		});
+	};
 
-	CSQR.copy = function (d, text) {
+	var _copy = function (d, text) {
 		if (!navigator.clipboard || typeof window.ClipboardItem === 'undefined') {
 			return Promise.reject(new Error('unsupported'));
 		}
 		return make(d, text, 600, 'canvas').getRawData('png').then(function (blob) {
 			return navigator.clipboard.write([new window.ClipboardItem({ 'image/png': blob })]);
+		});
+	};
+	// Wait until the logo is known to load (or not) so the library never hangs.
+	CSQR.copy = function (d, text) {
+		return (d.logo ? probeLogo(d.logo) : Promise.resolve()).then(function () {
+			return _copy(d, text);
 		});
 	};
 

@@ -96,8 +96,11 @@ jobs:
       - name: Start the site
         run: |
           PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8080 -t "$SITE" tests/e2e/router.php > "$RUNNER_TEMP/php.log" 2>&1 &
-          for i in $(seq 1 30); do curl -fsS -o /dev/null "$BASE/" && exit 0; sleep 1; done
-          cat "$RUNNER_TEMP/php.log"; exit 1
+          for i in $(seq 1 30); do curl -fsS -o /dev/null "$BASE/" && break; sleep 1; done
+          curl -fsS -o /dev/null "$BASE/" || { cat "$RUNNER_TEMP/php.log"; exit 1; }
+          # The tests use this logo; say plainly if it can't be served.
+          LOGO=$(jq -r .logo "$RUNNER_TEMP/fixtures.json")
+          echo "::notice title=Test logo::$(curl -sS -o /dev/null -w '%{http_code} %{content_type} %{size_download} bytes' "$LOGO" 2>&1) $LOGO"
       - name: Install Playwright
         run: |
           npm install --no-save --no-audit --no-fund playwright@1.63.0
