@@ -193,14 +193,14 @@ async function shot(page, name) {
 	await page.waitForSelector('.csqr-card canvas');
 	const styled = await page.$eval('.csqr-card', (n) => JSON.parse(n.getAttribute('data-csqr-design')));
 	ok(styled.qrColorDark === '#1d3a8a' && styled.logoUrl === fixtures.logo, 'block uses the saved style', styled);
-	await page.waitForTimeout(800); // logo loads
+	// The scan check finishes only after the logo has loaded and been drawn.
+	const logoCheck = await waitCheck(page, '.csqr-card');
 	const logoText = await decode(page, '.csqr-card .csqr-sheet__code');
 	ok(logoText === 'https://example.com/brand', 'code with a logo still decodes', logoText === 'https://example.com/brand' ? undefined : await page.evaluate(() => {
 		const c = document.querySelector('.csqr-card canvas');
-		const img = new Image();
 		return { decoded: null, canvas: c ? [c.width, c.height, c.style.width] : null, dpr: window.devicePixelRatio, check: document.querySelector('.csqr-card .csqr-check')?.textContent, design: document.querySelector('.csqr-card').getAttribute('data-csqr-design'), ua: navigator.userAgent };
 	}));
-	ok((await waitCheck(page, '.csqr-card')).level === 'ok', 'logo code passes the scan check');
+	ok(logoCheck.level === 'ok', 'logo code passes the scan check', logoCheck);
 
 	console.log('== Shortcodes');
 	await page.goto(fixtures.shortcodes);
