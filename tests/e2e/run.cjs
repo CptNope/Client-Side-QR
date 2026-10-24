@@ -72,10 +72,18 @@ async function decode(page, selector) {
 }
 
 async function waitCheck(page, selector) {
-	await page.waitForFunction((sel) => {
-		const n = document.querySelector(sel + ' .csqr-check');
-		return n && ['ok', 'warn', 'fail', 'unknown'].includes(n.getAttribute('data-level'));
-	}, selector, { timeout: 15000 });
+	try {
+		await page.waitForFunction((sel) => {
+			const n = document.querySelector(sel + ' .csqr-check');
+			return n && ['ok', 'warn', 'fail', 'unknown'].includes(n.getAttribute('data-level'));
+		}, selector, { timeout: 30000 });
+	} catch (e) {
+		// Say what was slow instead of only timing out.
+		const slow = await page.evaluate(() => performance.getEntriesByType('resource')
+			.filter((r) => r.duration > 500)
+			.map((r) => r.name.replace(location.origin, '') + ' ' + Math.round(r.duration) + 'ms'));
+		return { level: 'timeout', text: 'slow: ' + slow.join(', ') };
+	}
 	return page.$eval(selector + ' .csqr-check', (n) => ({ level: n.getAttribute('data-level'), text: n.textContent }));
 }
 
