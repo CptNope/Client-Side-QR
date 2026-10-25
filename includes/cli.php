@@ -13,7 +13,10 @@
  * @package AndersonQR
  */
 
-if ( ! defined( 'ABSPATH' ) || ! class_exists( 'WP_CLI' ) ) {
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+if ( ! class_exists( 'WP_CLI' ) ) {
 	return;
 }
 

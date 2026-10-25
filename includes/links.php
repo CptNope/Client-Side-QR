@@ -244,7 +244,7 @@ function csqr_link_message_page( $message, $status = 410 ) {
 	wp_die(
 		'<p style="font-size:1.25em;line-height:1.5">' . esc_html( $message ) . '</p><p><a href="' . esc_url( home_url( '/' ) ) . '">' . esc_html( get_bloginfo( 'name' ) ) . '</a></p>',
 		esc_html( get_bloginfo( 'name' ) ),
-		array( 'response' => $status )
+		array( 'response' => (int) $status )
 	);
 }
 
