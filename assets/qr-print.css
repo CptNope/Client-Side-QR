@@ -10,6 +10,14 @@
 	margin: 16px 0 24px;
 }
 
+.csqr-print__controls [hidden] {
+	display: none !important;
+}
+
+.csqr-print__back {
+	margin: 12px 0 0;
+}
+
 .csqr-print__controls label {
 	display: flex;
 	flex-direction: column;
@@ -101,11 +109,6 @@
 .csqr-print__cell--badge {
 	gap: 6mm;
 	padding: 8mm;
-}
-
-.csqr-print__cell--badge::before {
-	border: 0.2mm dashed #bbb;
-	background: none;
 }
 
 .csqr-print__code {

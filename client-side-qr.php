@@ -475,6 +475,8 @@ function csqr_core_strings() {
 		'zipProgress'       => __( 'Made %1$s of %2$s…', 'anderson-qr-code-generator' ),
 		/* translators: %1$s: number of codes */
 		'zipDone'           => __( 'Downloaded %1$s codes as PNG and SVG.', 'anderson-qr-code-generator' ),
+		/* translators: %1$s: printed width, e.g. "5 cm" */
+		'zipSize'           => __( 'Each is %1$s wide.', 'anderson-qr-code-generator' ),
 		'fillFirst'         => __( 'Fill in the form to download your code.', 'anderson-qr-code-generator' ),
 		'editorOnly'        => __( 'Only people who can edit the site see this check.', 'anderson-qr-code-generator' ),
 		/* translators: %1$s: the web address the QR code opens */

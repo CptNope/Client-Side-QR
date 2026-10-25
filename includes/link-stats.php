@@ -331,19 +331,22 @@ function csqr_stats_places_box( $post ) {
 		<ul class="csqr-places__list">
 			<?php foreach ( $places as $i => $p ) : ?>
 				<li class="csqr-places__item">
-					<input type="text" name="csqr[placements][<?php echo (int) $i; ?>][name]" value="<?php echo esc_attr( $p['name'] ); ?>" aria-label="<?php esc_attr_e( 'Spot name', 'anderson-qr-code-generator' ); ?>" />
+					<input type="text" name="csqr[placements][<?php echo (int) $i; ?>][name]" value="<?php echo esc_attr( $p['name'] ); ?>" aria-label="<?php /* translators: %s: spot name */ echo esc_attr( sprintf( __( 'Name of the spot “%s”', 'anderson-qr-code-generator' ), $p['name'] ) ); ?>" />
 					<input type="hidden" name="csqr[placements][<?php echo (int) $i; ?>][slug]" value="<?php echo esc_attr( $p['slug'] ); ?>" />
-					<button type="button" class="button-link csqr-places__remove" data-csqr-place-remove><?php esc_html_e( 'Remove', 'anderson-qr-code-generator' ); ?></button>
+					<button type="button" class="button-link csqr-places__remove" data-csqr-place-remove aria-label="<?php /* translators: %s: spot name */ echo esc_attr( sprintf( __( 'Remove the spot “%s”', 'anderson-qr-code-generator' ), $p['name'] ) ); ?>"><?php esc_html_e( 'Remove', 'anderson-qr-code-generator' ); ?></button>
 				</li>
 			<?php endforeach; ?>
 		</ul>
 		<p class="csqr-places__add">
 			<label for="csqr-new-place" class="screen-reader-text"><?php esc_html_e( 'New spot', 'anderson-qr-code-generator' ); ?></label>
 			<input type="text" id="csqr-new-place" name="csqr[placements][new][name]" placeholder="<?php esc_attr_e( 'For example: Front window', 'anderson-qr-code-generator' ); ?>" />
-			<span class="description"><?php esc_html_e( 'Saved when you update the link.', 'anderson-qr-code-generator' ); ?></span>
+			<span class="description"><?php esc_html_e( 'Saved when you update the link. Removing a spot stops counting it; its printed code then counts as the main code.', 'anderson-qr-code-generator' ); ?></span>
 		</p>
 	</div>
 	<?php if ( $live && ( $places || $counts[0]['scans'] ) ) : ?>
+		<?php if ( array_sum( wp_list_pluck( $counts, 'scans' ) ) < (int) get_post_meta( $post->ID, '_csqr_scans', true ) ) : ?>
+			<p class="description"><?php esc_html_e( 'Counts per spot (and per day) started with version 4.4, so they can add up to less than the total.', 'anderson-qr-code-generator' ); ?></p>
+		<?php endif; ?>
 		<table class="widefat csqr-places__table">
 			<thead>
 				<tr>
@@ -376,8 +379,10 @@ function csqr_stats_places_box( $post ) {
 				<?php endforeach; ?>
 			</tbody>
 		</table>
+	<?php endif; ?>
+	<?php if ( $live ) : ?>
 		<p class="csqr-places__print">
-			<a class="button" href="<?php echo esc_url( csqr_print_url( 'links', array( $post->ID ) ) ); ?>"><?php esc_html_e( 'Print or download every spot’s code', 'anderson-qr-code-generator' ); ?></a>
+			<a class="button" href="<?php echo esc_url( csqr_print_url( 'links', array( $post->ID ), 'contact' === csqr_link_kind( $post->ID ) ? 'badge' : '' ) ); ?>"><?php echo $places ? esc_html__( 'Print or download every spot’s code', 'anderson-qr-code-generator' ) : esc_html__( 'Print or download this code', 'anderson-qr-code-generator' ); ?></a>
 		</p>
 	<?php endif; ?>
 	<?php

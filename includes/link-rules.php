@@ -254,7 +254,9 @@ add_filter( 'csqr_link_target', 'csqr_expiry_target', 50, 2 );
  * @return void
  */
 function csqr_rules_meta_box() {
-	add_meta_box( 'csqr-link-rules', __( 'Change where it goes automatically', 'anderson-qr-code-generator' ), 'csqr_rules_box', CSQR_LINK_TYPE, 'normal', 'default' );
+	global $post;
+	$title = $post && 'contact' === csqr_link_kind( $post->ID ) ? __( 'End date', 'anderson-qr-code-generator' ) : __( 'Change where it goes automatically', 'anderson-qr-code-generator' );
+	add_meta_box( 'csqr-link-rules', $title, 'csqr_rules_box', CSQR_LINK_TYPE, 'normal', 'default' );
 }
 add_action( 'add_meta_boxes_' . CSQR_LINK_TYPE, 'csqr_rules_meta_box', 15 );
 
@@ -282,6 +284,23 @@ function csqr_rules_box( $post ) {
 		6 => __( 'Sat', 'anderson-qr-code-generator' ),
 		7 => __( 'Sun', 'anderson-qr-code-generator' ),
 	);
+	$is_contact = 'contact' === csqr_link_kind( $post->ID );
+	$has_rules  = $schedule || '' !== $ios || '' !== $android || '' !== $ends;
+	$tz         = wp_timezone_string();
+	$tz_unset   = 'UTC' === $tz || preg_match( '/^[+-]\d{2}:\d{2}$/', $tz );
+	// One line that says what's set, shown while the box is closed.
+	$summary = array();
+	if ( $schedule ) {
+		/* translators: %d: number of rules */
+		$summary[] = sprintf( _n( '%d time rule', '%d time rules', count( $schedule ), 'anderson-qr-code-generator' ), count( $schedule ) );
+	}
+	if ( '' !== $ios || '' !== $android ) {
+		$summary[] = __( 'phone links', 'anderson-qr-code-generator' );
+	}
+	$summary[] = '' !== $ends
+		/* translators: %s: date and time */
+		? sprintf( __( 'ends %s', 'anderson-qr-code-generator' ), wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), ( new DateTimeImmutable( $ends, wp_timezone() ) )->getTimestamp() ) )
+		: __( 'no end date', 'anderson-qr-code-generator' );
 	// Always offer one empty row to add a rule.
 	$rows   = $schedule;
 	$rows[] = array(
@@ -291,20 +310,52 @@ function csqr_rules_box( $post ) {
 		'url'  => '',
 	);
 	?>
+	<details class="csqr-rules__wrap"<?php echo $has_rules ? ' open' : ''; ?>>
+	<summary class="csqr-rules__summary">
+		<span class="csqr-rules__summary-text"><?php echo esc_html( ucfirst( implode( ', ', $summary ) ) ); ?></span>
+		<span class="csqr-rules__summary-action"><?php echo $is_contact ? esc_html__( 'Set an end date', 'anderson-qr-code-generator' ) : esc_html__( 'Add or change rules', 'anderson-qr-code-generator' ); ?></span>
+	</summary>
+	<?php if ( ! $is_contact ) : ?>
+		<ol class="csqr-rules__order" data-csqr-for="url">
+			<li><?php esc_html_e( 'After the end date: the end-date address or message.', 'anderson-qr-code-generator' ); ?></li>
+			<li><?php esc_html_e( 'On an iPhone or Android phone: its phone link, if set.', 'anderson-qr-code-generator' ); ?></li>
+			<li><?php esc_html_e( 'Otherwise the first time rule that matches.', 'anderson-qr-code-generator' ); ?></li>
+			<li><?php esc_html_e( 'Otherwise the destination above.', 'anderson-qr-code-generator' ); ?></li>
+		</ol>
+	<?php endif; ?>
+	<?php if ( $tz_unset ) : ?>
+		<div class="notice notice-warning inline csqr-rules__tz">
+			<p>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: 1: time zone like UTC or +00:00, 2: current time there */
+						__( 'Times use your site’s time zone, which is set to %1$s (it’s %2$s there now). If you’re not in that time zone, rules will switch at the wrong time.', 'anderson-qr-code-generator' ),
+						$tz,
+						$now->format( get_option( 'time_format' ) )
+					)
+				);
+				?>
+				<a href="<?php echo esc_url( admin_url( 'options-general.php#timezone_string' ) ); ?>"><?php esc_html_e( 'Choose your city in Settings → General', 'anderson-qr-code-generator' ); ?></a>
+			</p>
+		</div>
+	<?php endif; ?>
 	<div class="csqr-rules" data-csqr-for="url">
 		<h3 class="csqr-rules__heading"><?php esc_html_e( 'By time of day', 'anderson-qr-code-generator' ); ?></h3>
-		<p class="description">
-			<?php
-			echo esc_html(
-				sprintf(
-					/* translators: 1: time zone name, 2: current time */
-					__( 'The first matching rule wins; otherwise the code uses the destination above. Times are in %1$s (now %2$s).', 'anderson-qr-code-generator' ),
-					wp_timezone_string(),
-					$now->format( get_option( 'time_format' ) )
-				)
-			);
-			?>
-		</p>
+		<?php if ( ! $tz_unset ) : ?>
+			<p class="description">
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: 1: time zone name, 2: current time */
+						__( 'Times are in %1$s (now %2$s).', 'anderson-qr-code-generator' ),
+						$tz,
+						$now->format( get_option( 'time_format' ) )
+					)
+				);
+				?>
+			</p>
+		<?php endif; ?>
 		<div class="csqr-rules__list">
 			<?php foreach ( $rows as $i => $rule ) : ?>
 				<fieldset class="csqr-rule">
@@ -314,6 +365,11 @@ function csqr_rules_box( $post ) {
 						echo esc_html( sprintf( __( 'Rule %d', 'anderson-qr-code-generator' ), $i + 1 ) );
 						?>
 					</legend>
+					<span class="csqr-rule__presets" data-csqr-day-presets>
+						<button type="button" class="button-link" data-days="1,2,3,4,5"><?php esc_html_e( 'Weekdays', 'anderson-qr-code-generator' ); ?></button>
+						<button type="button" class="button-link" data-days="6,7"><?php esc_html_e( 'Weekends', 'anderson-qr-code-generator' ); ?></button>
+						<button type="button" class="button-link" data-days=""><?php esc_html_e( 'Every day', 'anderson-qr-code-generator' ); ?></button>
+					</span>
 					<span class="csqr-rule__days">
 						<?php foreach ( $days as $n => $label ) : ?>
 							<label><input type="checkbox" name="csqr[schedule][<?php echo (int) $i; ?>][days][]" value="<?php echo (int) $n; ?>" <?php checked( in_array( $n, $rule['days'], true ) ); ?> /> <?php echo esc_html( $label ); ?></label>
@@ -339,13 +395,13 @@ function csqr_rules_box( $post ) {
 				<th scope="row"><label for="csqr-android"><?php esc_html_e( 'Android', 'anderson-qr-code-generator' ); ?></label></th>
 				<td>
 					<input type="url" id="csqr-android" class="large-text" name="csqr[android_url]" value="<?php echo esc_attr( $android ); ?>" placeholder="https://play.google.com/…" />
-					<p class="description"><?php esc_html_e( 'Handy for app links. Leave empty to use the destination above. Phone links win over the time rules.', 'anderson-qr-code-generator' ); ?></p>
+					<p class="description"><?php esc_html_e( 'Handy for app links. Leave empty to use the destination above.', 'anderson-qr-code-generator' ); ?></p>
 				</td>
 			</tr>
 		</table>
 	</div>
 
-	<h3 class="csqr-rules__heading"><?php esc_html_e( 'End date', 'anderson-qr-code-generator' ); ?></h3>
+	<h3 class="csqr-rules__heading"><?php echo $is_contact ? esc_html__( 'Stop sharing this card on a date', 'anderson-qr-code-generator' ) : esc_html__( 'End date', 'anderson-qr-code-generator' ); ?></h3>
 	<table class="form-table" role="presentation">
 		<tr>
 			<th scope="row"><label for="csqr-ends"><?php esc_html_e( 'Stop on', 'anderson-qr-code-generator' ); ?></label></th>
@@ -358,11 +414,12 @@ function csqr_rules_box( $post ) {
 		<tr>
 			<th scope="row"><label for="csqr-end-message"><?php esc_html_e( 'Or show', 'anderson-qr-code-generator' ); ?></label></th>
 			<td>
-				<input type="text" id="csqr-end-message" class="large-text" name="csqr[end_message]" value="<?php echo esc_attr( $message ); ?>" placeholder="<?php esc_attr_e( 'This offer has ended. Thanks for scanning!', 'anderson-qr-code-generator' ); ?>" />
-				<p class="description"><?php esc_html_e( 'For limited-time offers and events. Without an address, people who scan see this message.', 'anderson-qr-code-generator' ); ?></p>
+				<input type="text" id="csqr-end-message" class="large-text" name="csqr[end_message]" value="<?php echo esc_attr( $message ); ?>" placeholder="<?php echo $is_contact ? esc_attr__( 'This card is no longer in use.', 'anderson-qr-code-generator' ) : esc_attr__( 'This offer has ended. Thanks for scanning!', 'anderson-qr-code-generator' ); ?>" />
+				<p class="description"><?php echo $is_contact ? esc_html__( 'For example when someone leaves. Without an address, people who scan see this message.', 'anderson-qr-code-generator' ) : esc_html__( 'For limited-time offers and events. Without an address, people who scan see this message.', 'anderson-qr-code-generator' ); ?></p>
 			</td>
 		</tr>
 	</table>
+	</details>
 	<?php if ( 'publish' === $post->post_status ) : ?>
 		<p class="csqr-rules__now">
 			<strong><?php esc_html_e( 'Right now a scan goes to:', 'anderson-qr-code-generator' ); ?></strong>
