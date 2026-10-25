@@ -270,6 +270,19 @@
 		});
 	}
 
+	// "Weekdays / Weekends / Every day" tick the right boxes in one go.
+	document.addEventListener('click', function (e) {
+		var btn = e.target.closest('[data-csqr-day-presets] [data-days]');
+		if (!btn) {
+			return;
+		}
+		var days = btn.getAttribute('data-days').split(',').filter(Boolean);
+		var rule = btn.closest('.csqr-rule');
+		Array.prototype.forEach.call(rule.querySelectorAll('.csqr-rule__days input'), function (box) {
+			box.checked = days.indexOf(box.value) !== -1;
+		});
+	});
+
 	document.addEventListener('DOMContentLoaded', function () {
 		Array.prototype.forEach.call(document.querySelectorAll('.csqr-link-form'), mountLinkForm);
 		Array.prototype.forEach.call(document.querySelectorAll('[data-csqr-places]'), mountPlaces);

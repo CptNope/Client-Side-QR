@@ -637,7 +637,8 @@ function csqr_link_column( $column, $post_id ) {
 		case 'csqr_url':
 			$url = csqr_link_url( $post_id );
 			if ( $url ) {
-				echo '<code>' . esc_html( preg_replace( '#^https?://#', '', $url ) ) . '</code>';
+				echo '<code class="csqr-nowrap">' . esc_html( preg_replace( '#^https?://#', '', $url ) ) . '</code>';
+				echo '<div class="row-actions"><a href="' . esc_url( csqr_print_url( 'links', array( $post_id ), 'contact' === csqr_link_kind( $post_id ) ? 'badge' : '' ) ) . '">' . esc_html__( 'Print', 'anderson-qr-code-generator' ) . '</a></div>';
 			}
 			break;
 		case 'csqr_dest':

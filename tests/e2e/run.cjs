@@ -383,6 +383,10 @@ async function shot(page, name) {
 	await page.goto(BASE + '/wp-admin/admin.php?page=csqr-bulk');
 	await page.fill('#csqr-rows', 'name,destination,placements\nBrunch menu,https://example.com/brunch,"Patio, Bar"\nWine list,https://example.com/wine,\nNo address,,');
 	await Promise.all([page.waitForNavigation(), page.click('.csqr-bulk__form [type="submit"]')]);
+	const plan = await page.$$eval('.csqr-bulk__preview tbody tr', (rows) => rows.map((tr) => tr.className));
+	ok(plan.join() === 'is-created,is-created,is-error', 'bulk create shows a check first', plan);
+	ok(!(await page.request.get(BASEU + '/qr/brunch-menu/', { maxRedirects: 0, headers: desk })).headers().location, 'nothing is created before confirming');
+	await Promise.all([page.waitForNavigation(), page.click('.csqr-bulk__confirm [type="submit"]')]);
 	const note = await page.textContent('.csqr-bulk__results');
 	ok(/2 created/.test(note) && /1 with a problem/.test(note), 'bulk create makes the good rows and reports the bad one', note.replace(/\s+/g, ' ').trim());
 	await Promise.all([page.waitForNavigation(), page.click('.csqr-bulk__results .button-primary')]);
@@ -522,6 +526,9 @@ async function shot(page, name) {
 	ok(errors.length === 0, 'no JavaScript errors', errors);
 
 	console.log(`\n${pass} passed, ${fail} failed`);
+	if (process.env.GITHUB_ACTIONS) {
+		console.log(`::notice title=Browser tests::${pass} passed, ${fail} failed; WooCommerce checks ${fixtures.product ? 'ran' : 'skipped (WooCommerce not active)'}`);
+	}
 	await browser.close();
 	process.exit(fail ? 1 : 0);
 })().catch((e) => {

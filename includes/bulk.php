@@ -52,6 +52,7 @@ function csqr_bulk_columns() {
 			'after_end'   => __( 'Where it goes after the end date', 'anderson-qr-code-generator' ),
 			'ios_url'     => __( 'iPhone destination', 'anderson-qr-code-generator' ),
 			'android_url' => __( 'Android destination', 'anderson-qr-code-generator' ),
+			'end_message' => __( 'Message after the end date, if there’s no address to go to', 'anderson-qr-code-generator' ),
 		)
 	);
 }
@@ -129,7 +130,7 @@ function csqr_bulk_parse_csv( $text ) {
  * @param string                            $existing "skip" or "update" when the short address is taken.
  * @return array<int, array{row: int, status: string, id?: int, name: string, message?: string}>
  */
-function csqr_bulk_import( $rows, $existing = 'skip' ) {
+function csqr_bulk_import( $rows, $existing = 'skip', $dry_run = false ) {
 	$allowed = array_merge( array( 'name', 'slug' ), array_keys( csqr_link_schema() ) );
 	$out     = array();
 	foreach ( $rows as $i => $row ) {
@@ -163,6 +164,20 @@ function csqr_bulk_import( $rows, $existing = 'skip' ) {
 			continue;
 		}
 		$args['slug'] = $slug;
+		if ( $dry_run ) {
+			$kind = isset( $args['kind'] ) ? $args['kind'] : ( $found ? csqr_link_kind( $found ) : 'url' );
+			$dest = isset( $args['destination'] ) ? esc_url_raw( $args['destination'], array( 'http', 'https' ) ) : ( $found ? csqr_link_destination( $found ) : '' );
+			$bad  = 'contact' !== $kind && '' === $dest;
+			$out[] = array(
+				'row'     => $i + 2,
+				'status'  => $bad ? 'error' : ( $found ? 'updated' : 'created' ),
+				'id'      => $found,
+				'name'    => $name,
+				'slug'    => $slug,
+				'message' => $bad ? __( 'A short link needs a destination (an http or https address).', 'anderson-qr-code-generator' ) : '',
+			);
+			continue;
+		}
 		$id           = csqr_save_link( $args, $found );
 		if ( is_wp_error( $id ) ) {
 			$out[] = array(
@@ -194,6 +209,20 @@ function csqr_bulk_handle() {
 	}
 	check_admin_referer( 'csqr_bulk' );
 
+	$user = get_current_user_id();
+	$step = isset( $_POST['csqr_step'] ) && 'confirm' === $_POST['csqr_step'] ? 'confirm' : 'preview';
+	if ( 'confirm' === $step ) {
+		$plan = get_transient( 'csqr_bulk_plan_' . $user );
+		delete_transient( 'csqr_bulk_plan_' . $user );
+		if ( ! is_array( $plan ) ) {
+			wp_safe_redirect( admin_url( 'admin.php?page=csqr-bulk&expired=1' ) );
+			exit;
+		}
+		set_transient( 'csqr_bulk_results_' . $user, csqr_bulk_import( csqr_bulk_parse_csv( $plan['text'] ), $plan['existing'] ), HOUR_IN_SECONDS );
+		wp_safe_redirect( admin_url( 'admin.php?page=csqr-bulk&imported=1' ) );
+		exit;
+	}
+
 	$text = '';
 	if ( ! empty( $_FILES['csqr_csv']['tmp_name'] ) && is_uploaded_file( sanitize_text_field( $_FILES['csqr_csv']['tmp_name'] ) ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- The uploaded spreadsheet.
@@ -202,10 +231,17 @@ function csqr_bulk_handle() {
 		$text = sanitize_textarea_field( wp_unslash( $_POST['csqr_rows'] ) );
 	}
 	$existing = isset( $_POST['csqr_existing'] ) && 'update' === $_POST['csqr_existing'] ? 'update' : 'skip';
-	$results  = csqr_bulk_import( csqr_bulk_parse_csv( $text ), $existing );
-
-	set_transient( 'csqr_bulk_results_' . get_current_user_id(), $results, HOUR_IN_SECONDS );
-	wp_safe_redirect( admin_url( 'admin.php?page=csqr-bulk&imported=1' ) );
+	// First show what would happen; nothing is written until it's confirmed.
+	set_transient(
+		'csqr_bulk_plan_' . $user,
+		array(
+			'text'     => $text,
+			'existing' => $existing,
+			'plan'     => csqr_bulk_import( csqr_bulk_parse_csv( $text ), $existing, true ),
+		),
+		HOUR_IN_SECONDS
+	);
+	wp_safe_redirect( admin_url( 'admin.php?page=csqr-bulk&preview=1' ) );
 	exit;
 }
 add_action( 'admin_post_csqr_bulk_import', 'csqr_bulk_handle' );
@@ -272,12 +308,24 @@ function csqr_render_bulk_page() {
 		$results = is_array( $results ) ? $results : array();
 		delete_transient( 'csqr_bulk_results_' . get_current_user_id() );
 	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+	if ( isset( $_GET['preview'] ) ) {
+		$plan = get_transient( 'csqr_bulk_plan_' . get_current_user_id() );
+		if ( is_array( $plan ) ) {
+			csqr_bulk_preview( $plan );
+			return;
+		}
+	}
 	$example = "name,destination,placements\nDinner menu,https://example.com/dinner,\"Window, Table cards\"\nWine list,https://example.com/wine,";
 	?>
 	<div class="wrap csqr-admin csqr-bulk">
 		<h1><?php esc_html_e( 'Create many short links', 'anderson-qr-code-generator' ); ?></h1>
 		<?php if ( $results ) : ?>
 			<?php csqr_bulk_results( $results ); ?>
+		<?php endif; ?>
+		<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only. ?>
+		<?php if ( isset( $_GET['expired'] ) ) : ?>
+			<div class="notice notice-warning"><p><?php esc_html_e( 'That check is more than an hour old. Add the rows again.', 'anderson-qr-code-generator' ); ?></p></div>
 		<?php endif; ?>
 		<p><?php esc_html_e( 'Make a short link for every row of a spreadsheet, then print all their codes on one sheet.', 'anderson-qr-code-generator' ); ?></p>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data" class="csqr-bulk__form">
@@ -293,7 +341,20 @@ function csqr_render_bulk_page() {
 				</tr>
 				<tr>
 					<th scope="row"><label for="csqr-rows"><?php esc_html_e( 'Or paste rows', 'anderson-qr-code-generator' ); ?></label></th>
-					<td><textarea id="csqr-rows" name="csqr_rows" rows="6" class="large-text code" placeholder="<?php echo esc_attr( $example ); ?>"></textarea></td>
+					<td>
+						<textarea id="csqr-rows" name="csqr_rows" rows="6" class="large-text code" placeholder="<?php echo esc_attr( $example ); ?>"></textarea>
+						<details class="csqr-bulk__help">
+							<summary><?php esc_html_e( 'Which columns can I use?', 'anderson-qr-code-generator' ); ?></summary>
+							<p><?php esc_html_e( 'The first row names the columns. Only name is required; leave out any you don’t need.', 'anderson-qr-code-generator' ); ?></p>
+							<table class="widefat striped csqr-bulk__columns">
+								<tbody>
+									<?php foreach ( csqr_bulk_columns() as $col => $desc ) : ?>
+										<tr><th scope="row"><code><?php echo esc_html( $col ); ?></code></th><td><?php echo esc_html( $desc ); ?></td></tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</details>
+					</td>
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'If a short address is taken', 'anderson-qr-code-generator' ); ?></th>
@@ -301,27 +362,18 @@ function csqr_render_bulk_page() {
 						<fieldset>
 							<label><input type="radio" name="csqr_existing" value="skip" checked /> <?php esc_html_e( 'Leave the existing link alone', 'anderson-qr-code-generator' ); ?></label><br />
 							<label><input type="radio" name="csqr_existing" value="update" /> <?php esc_html_e( 'Update it with the row', 'anderson-qr-code-generator' ); ?></label>
+							<p class="description"><?php esc_html_e( 'Updating changes where codes already printed for that link go.', 'anderson-qr-code-generator' ); ?></p>
 						</fieldset>
 					</td>
 				</tr>
 			</table>
-			<?php submit_button( __( 'Create short links', 'anderson-qr-code-generator' ) ); ?>
+			<input type="hidden" name="csqr_step" value="preview" />
+			<?php submit_button( __( 'Check the rows', 'anderson-qr-code-generator' ) ); ?>
 		</form>
-
-		<h2><?php esc_html_e( 'Columns', 'anderson-qr-code-generator' ); ?></h2>
-		<p><?php esc_html_e( 'The first row names the columns. Only name is required; leave out any you don’t need.', 'anderson-qr-code-generator' ); ?></p>
-		<table class="widefat striped csqr-bulk__columns">
-			<tbody>
-				<?php foreach ( csqr_bulk_columns() as $col => $desc ) : ?>
-					<tr><th scope="row"><code><?php echo esc_html( $col ); ?></code></th><td><?php echo esc_html( $desc ); ?></td></tr>
-				<?php endforeach; ?>
-			</tbody>
-		</table>
 
 		<h2><?php esc_html_e( 'Export', 'anderson-qr-code-generator' ); ?></h2>
 		<p><?php esc_html_e( 'Download every short link with its scan count, in the same columns. Edit it and import it again to update many links at once.', 'anderson-qr-code-generator' ); ?></p>
 		<p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=csqr_bulk_export' ), 'csqr_bulk_export' ) ); ?>"><?php esc_html_e( 'Download spreadsheet', 'anderson-qr-code-generator' ); ?></a></p>
-		<?php csqr_render_about(); ?>
 	</div>
 	<?php
 }
@@ -392,20 +444,32 @@ function csqr_bulk_results( $results ) {
  * @param array<int, int> $ids    Item ids.
  * @return string
  */
-function csqr_print_url( $source, $ids ) {
-	return add_query_arg(
-		array(
-			'page'   => 'csqr-print',
-			'source' => $source,
-			'ids'    => implode( ',', array_map( 'intval', $ids ) ),
-		),
-		admin_url( 'admin.php' )
+function csqr_print_url( $source, $ids, $layout = '' ) {
+	$args = array(
+		'page'   => 'csqr-print',
+		'source' => $source,
+		'ids'    => implode( ',', array_map( 'intval', $ids ) ),
 	);
+	if ( '' !== $layout ) {
+		$args['layout'] = $layout;
+	}
+	return add_query_arg( $args, admin_url( 'admin.php' ) );
+}
+
+/**
+ * Default paper for the site's language: Letter where it's the norm.
+ *
+ * @return string letter|a4
+ */
+function csqr_default_paper() {
+	$locale = get_locale();
+	return in_array( $locale, array( 'en_US', 'en_CA', 'es_MX', 'es_US', 'fr_CA', 'es_CL', 'es_CO', 'es_VE', 'en_PH', 'fil' ), true ) ? 'letter' : 'a4';
 }
 
 /**
  * Items for the print sheet. Each: text (what the code holds), title,
- * lines (smaller text under it), name (file name).
+ * lines (smaller text under it), address (short address to show), spot
+ * (internal spot name, printed in the cut margin), name (file name).
  *
  * @param string          $source Source.
  * @param array<int, int> $ids    Ids.
@@ -420,17 +484,19 @@ function csqr_print_items( $source, $ids ) {
 				continue;
 			}
 			$items[] = array(
-				'text'  => csqr_link_url( $id ),
-				'title' => $post->post_title,
-				'lines' => array( preg_replace( '#^https?://#', '', csqr_link_url( $id ) ) ),
-				'name'  => 'qr-' . $post->post_name,
+				'text'    => csqr_link_url( $id ),
+				'title'   => $post->post_title,
+				'address' => preg_replace( '#^https?://#', '', csqr_link_url( $id ) ),
+				'spot'    => '',
+				'name'    => 'qr-' . $post->post_name,
 			);
 			foreach ( csqr_link_placements( $id ) as $p ) {
 				$items[] = array(
-					'text'  => csqr_link_url( $id, $p['slug'] ),
-					'title' => $post->post_title,
-					'lines' => array( $p['name'] ),
-					'name'  => 'qr-' . $post->post_name . '-' . $p['slug'],
+					'text'    => csqr_link_url( $id, $p['slug'] ),
+					'title'   => $post->post_title,
+					'address' => preg_replace( '#^https?://#', '', csqr_link_url( $id ) ),
+					'spot'    => $p['name'],
+					'name'    => 'qr-' . $post->post_name . '-' . $p['slug'],
 				);
 			}
 		}
@@ -464,10 +530,17 @@ function csqr_render_print_page() {
 	// phpcs:enable WordPress.Security.NonceVerification.Recommended
 	$items = csqr_print_items( $source, array_slice( $ids, 0, 500 ) );
 	$back  = 'products' === $source ? admin_url( 'edit.php?post_type=product' ) : admin_url( 'edit.php?post_type=' . CSQR_LINK_TYPE );
+	if ( 'links' === $source && 1 === count( $ids ) ) {
+		$back = get_edit_post_link( $ids[0], 'raw' );
+	} elseif ( 'order' === $source && $ids && function_exists( 'wc_get_order' ) && wc_get_order( $ids[0] ) ) {
+		$back = wc_get_order( $ids[0] )->get_edit_order_url();
+	}
+	$paper = csqr_default_paper();
 	wp_enqueue_script( 'csqr-print', CSQR_URL . 'assets/qr-print.js', array( 'csqr-ui' ), CSQR_VERSION, true );
 	wp_enqueue_style( 'csqr-print', CSQR_URL . 'assets/qr-print.css', array( 'csqr-admin' ), CSQR_VERSION );
 	?>
 	<div class="wrap csqr-admin csqr-print" data-csqr-print data-csqr-design="<?php echo esc_attr( wp_json_encode( csqr_card_design( array() ) ) ); ?>">
+		<p class="csqr-print__back"><a href="<?php echo esc_url( $back ); ?>">&larr; <?php esc_html_e( 'Back', 'anderson-qr-code-generator' ); ?></a></p>
 		<h1 class="csqr-print__heading"><?php esc_html_e( 'Print QR codes', 'anderson-qr-code-generator' ); ?></h1>
 		<?php if ( ! $items ) : ?>
 			<p><?php esc_html_e( 'Nothing to print yet. Pick short links (or products) and choose “Print QR codes” from the Bulk actions menu.', 'anderson-qr-code-generator' ); ?></p>
@@ -483,8 +556,8 @@ function csqr_render_print_page() {
 				</label>
 				<label><?php esc_html_e( 'Paper', 'anderson-qr-code-generator' ); ?>
 					<select data-csqr-print-paper>
-						<option value="letter" <?php selected( 'in' === csqr_get_settings()['printUnits'] ); ?>><?php esc_html_e( 'US Letter', 'anderson-qr-code-generator' ); ?></option>
-						<option value="a4" <?php selected( 'in' !== csqr_get_settings()['printUnits'] ); ?>><?php esc_html_e( 'A4', 'anderson-qr-code-generator' ); ?></option>
+						<option value="letter" <?php selected( 'letter', $paper ); ?>><?php esc_html_e( 'US Letter', 'anderson-qr-code-generator' ); ?></option>
+						<option value="a4" <?php selected( 'a4', $paper ); ?>><?php esc_html_e( 'A4', 'anderson-qr-code-generator' ); ?></option>
 					</select>
 				</label>
 				<label data-csqr-print-for="grid"><?php esc_html_e( 'Code size', 'anderson-qr-code-generator' ); ?>
@@ -493,6 +566,16 @@ function csqr_render_print_page() {
 						<option value="4" selected>4 cm (1.6 in)</option>
 						<option value="5">5 cm (2 in)</option>
 						<option value="7">7 cm (2.8 in)</option>
+					</select>
+				</label>
+				<label><?php esc_html_e( 'Under each code', 'anderson-qr-code-generator' ); ?>
+					<select data-csqr-print-under>
+						<option value="address"><?php esc_html_e( 'Name and short address', 'anderson-qr-code-generator' ); ?></option>
+						<option value="name"><?php esc_html_e( 'Name only', 'anderson-qr-code-generator' ); ?></option>
+						<?php if ( array_filter( wp_list_pluck( $items, 'spot' ) ) ) : ?>
+							<option value="spot"><?php esc_html_e( 'Name and spot (to sort them, not for customers)', 'anderson-qr-code-generator' ); ?></option>
+						<?php endif; ?>
+						<option value="none"><?php esc_html_e( 'Nothing', 'anderson-qr-code-generator' ); ?></option>
 					</select>
 				</label>
 				<label class="csqr-print__line"><?php esc_html_e( 'Extra line', 'anderson-qr-code-generator' ); ?>
@@ -541,3 +624,62 @@ function csqr_bulk_link_print( $redirect, $action, $ids ) {
 	return 'csqr_print' === $action ? csqr_print_url( 'links', $ids ) : $redirect;
 }
 add_filter( 'handle_bulk_actions-edit-' . CSQR_LINK_TYPE, 'csqr_bulk_link_print', 10, 3 );
+
+/**
+ * What an import would do, row by row, with a button to go ahead.
+ *
+ * @param array<string, mixed> $plan { text, existing, plan }.
+ * @return void
+ */
+function csqr_bulk_preview( $plan ) {
+	$rows   = $plan['plan'];
+	$count  = array_count_values( wp_list_pluck( $rows, 'status' ) );
+	$doing  = ( isset( $count['created'] ) ? $count['created'] : 0 ) + ( isset( $count['updated'] ) ? $count['updated'] : 0 );
+	$labels = array(
+		'created' => __( 'Will be created', 'anderson-qr-code-generator' ),
+		'updated' => __( 'Will be updated', 'anderson-qr-code-generator' ),
+		'skipped' => __( 'Skipped: address already used', 'anderson-qr-code-generator' ),
+		'error'   => __( 'Problem', 'anderson-qr-code-generator' ),
+	);
+	?>
+	<div class="wrap csqr-admin csqr-bulk">
+		<h1><?php esc_html_e( 'Check before creating', 'anderson-qr-code-generator' ); ?></h1>
+		<?php if ( ! $rows ) : ?>
+			<div class="notice notice-error inline"><p><?php esc_html_e( 'No rows found. The first row should name the columns, for example: name,destination', 'anderson-qr-code-generator' ); ?></p></div>
+		<?php else : ?>
+			<table class="widefat striped csqr-bulk__preview">
+				<thead>
+					<tr>
+						<th scope="col"><?php esc_html_e( 'Row', 'anderson-qr-code-generator' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Name', 'anderson-qr-code-generator' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Short address', 'anderson-qr-code-generator' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'What happens', 'anderson-qr-code-generator' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $rows as $r ) : ?>
+						<tr class="is-<?php echo esc_attr( $r['status'] ); ?>">
+							<td><?php echo (int) $r['row']; ?></td>
+							<td><?php echo esc_html( '' !== $r['name'] ? $r['name'] : '—' ); ?></td>
+							<td><?php echo ! empty( $r['slug'] ) ? '<code class="csqr-nowrap">/' . esc_html( csqr_get_settings()['linkPrefix'] . '/' . $r['slug'] ) . '/</code>' : '—'; ?></td>
+							<td><strong><?php echo esc_html( $labels[ $r['status'] ] ); ?></strong><?php echo ! empty( $r['message'] ) && 'error' === $r['status'] ? ': ' . esc_html( $r['message'] ) : ''; ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		<?php endif; ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="csqr-bulk__confirm">
+			<?php wp_nonce_field( 'csqr_bulk' ); ?>
+			<input type="hidden" name="action" value="csqr_bulk_import" />
+			<input type="hidden" name="csqr_step" value="confirm" />
+			<?php if ( $doing ) : ?>
+				<?php
+				/* translators: %s: number of links */
+				submit_button( sprintf( _n( 'Create or update %s link', 'Create or update %s links', $doing, 'anderson-qr-code-generator' ), number_format_i18n( $doing ) ), 'primary', 'submit', false );
+				?>
+			<?php endif; ?>
+			<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=csqr-bulk' ) ); ?>"><?php esc_html_e( 'Start over', 'anderson-qr-code-generator' ); ?></a>
+		</form>
+	</div>
+	<?php
+}

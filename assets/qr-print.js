@@ -32,7 +32,8 @@
 		layout: root.querySelector('[data-csqr-print-layout]'),
 		paper: root.querySelector('[data-csqr-print-paper]'),
 		size: root.querySelector('[data-csqr-print-size]'),
-		extra: root.querySelector('[data-csqr-print-extra]')
+		extra: root.querySelector('[data-csqr-print-extra]'),
+		under: root.querySelector('[data-csqr-print-under]')
 	};
 
 	// Paper in millimetres, with a 10 mm margin most printers can reach.
@@ -89,9 +90,20 @@
 	}
 
 	function caption(item, cls) {
+		var under = controls.under ? controls.under.value : 'address';
 		var wrap = el('div', 'csqr-print__text ' + (cls || ''));
+		if (under === 'none') {
+			return wrap;
+		}
 		wrap.appendChild(el('strong', 'csqr-print__title', item.title));
-		(item.lines || []).forEach(function (line) {
+		var lines = (item.lines || []).slice();
+		if (under === 'address' && item.address) {
+			lines.push(item.address);
+		}
+		if (under === 'spot' && item.spot) {
+			lines.push(item.spot);
+		}
+		lines.forEach(function (line) {
 			if (line) {
 				wrap.appendChild(el('span', 'csqr-print__sub', line));
 			}
@@ -266,6 +278,7 @@
 	CSQR.zip = zip;
 
 	function downloadAll(button) {
+		// Tents and badges size their codes to the page; the files use 5 cm.
 		var cm = controls.layout.value === 'grid' ? parseFloat(controls.size.value) : 5;
 		var used = {};
 		var done = 0;
@@ -298,7 +311,7 @@
 		Promise.all(jobs).then(function (pairs) {
 			var files = [].concat.apply([], pairs);
 			CSQR.save(zip(files), 'qr-codes.zip');
-			status.textContent = CSQR.format(t('zipDone', 'Downloaded %1$s codes as PNG and SVG.'), items.length);
+			status.textContent = CSQR.format(t('zipDone', 'Downloaded %1$s codes as PNG and SVG.'), items.length) + ' ' + CSQR.format(t('zipSize', 'Each is %1$s wide.'), CSQR.sizeLabel(cm));
 		}).catch(function () {
 			status.textContent = t('downloadError', 'That download didn’t work in this browser.');
 		}).then(function () {
@@ -321,8 +334,10 @@
 		controls.layout.value = asked;
 	}
 
-	['layout', 'paper', 'size'].forEach(function (k) {
-		controls[k].addEventListener('change', render);
+	['layout', 'paper', 'size', 'under'].forEach(function (k) {
+		if (controls[k]) {
+			controls[k].addEventListener('change', render);
+		}
 	});
 	var timer;
 	controls.extra.addEventListener('input', function () {
