@@ -1,0 +1,163 @@
+/* Anderson QR Code Generator: admin screens. Follows WordPress admin styles;
+   only the preview, style list and short-link pieces are its own. */
+
+.csqr-admin .csqr-admin__lede {
+	max-width: 46rem;
+	font-size: 14px;
+}
+
+.csqr-admin h2 {
+	margin-top: 2.25em;
+}
+
+.csqr-admin__split {
+	display: grid;
+	gap: 24px;
+	align-items: start;
+}
+
+@media (min-width: 1100px) {
+	.csqr-admin__split {
+		grid-template-columns: minmax(0, 46rem) 260px;
+	}
+}
+
+.csqr-admin-preview {
+	position: sticky;
+	top: 48px;
+	padding: 20px 20px 16px;
+	border: 1px solid #dcdcde;
+	background: #fff;
+	color: #1d2327;
+}
+
+.csqr-admin-preview .csqr-sheet {
+	margin: 14px auto;
+}
+
+.csqr-admin-preview .csqr-check,
+.csqr-card .csqr-check {
+	color: #1d2327;
+}
+
+.csqr-admin input[type="color"] {
+	width: 44px;
+	height: 30px;
+	padding: 2px;
+	vertical-align: middle;
+}
+
+.csqr-admin .csqr-media input[type="url"] {
+	max-width: 22rem;
+}
+
+.csqr-admin__more {
+	margin: 1em 0;
+}
+
+.csqr-admin__more > summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.csqr-admin__label {
+	display: block;
+	margin: 1em 0 0.4em;
+	font-weight: 600;
+}
+
+.csqr-admin__copied {
+	color: #1a7f37;
+	font-weight: 600;
+}
+
+/* Saved styles list */
+.csqr-style-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 12px;
+	margin: 16px 0 8px;
+	max-width: 70rem;
+}
+
+.csqr-style-list__item {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin: 0;
+	padding: 12px 16px;
+	border: 1px solid #dcdcde;
+	background: #fff;
+}
+
+.csqr-style-list__item .csqr-card {
+	margin: 0;
+	flex: none;
+}
+
+.csqr-style-list__item .csqr-sheet {
+	margin: 13px;
+}
+
+.csqr-style-list__meta {
+	display: grid;
+	gap: 6px;
+	min-width: 0;
+}
+
+.csqr-style-list__meta code {
+	white-space: nowrap;
+	font-size: 11px;
+	word-break: break-all;
+}
+
+.csqr-style-list__actions a {
+	margin-right: 10px;
+}
+
+.csqr-danger {
+	color: #b32d2e;
+}
+
+/* Short links */
+.csqr-slug {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 2px;
+}
+
+.csqr-slug__base {
+	color: #50575e;
+	font-family: Consolas, Monaco, monospace;
+}
+
+.csqr-slug input {
+	width: 14em;
+	font-family: Consolas, Monaco, monospace;
+}
+
+.csqr-scans {
+	margin-right: 6px;
+	font-size: 20px;
+	font-variant-numeric: tabular-nums;
+}
+
+#csqr-link-code .csqr-card,
+#csqr-page-qr .csqr-card {
+	margin: 8px auto 0;
+	font-size: 13px;
+	color: #1d2327;
+}
+
+#csqr-link-code .csqr-export__buttons .csqr-button,
+#csqr-page-qr .csqr-export__buttons .csqr-button {
+	min-height: 30px;
+	padding: 2px 10px;
+}
+
+.csqr-admin .csqr .csqr-export__png,
+#csqr-link-code .csqr .csqr-export__png,
+#csqr-page-qr .csqr .csqr-export__png {
+	--csqr-accent: #2271b1;
+}

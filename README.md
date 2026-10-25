@@ -1,183 +1,89 @@
 # Anderson QR Code Generator
 
-Anderson QR Code Generator (formerly Client-Side QR Code Generator) is a WordPress plugin for creating privacy-friendly QR experiences directly in the browser. It supports a Gutenberg block and shortcode, keeps QR rendering on the client side, and gives site owners flexible controls for links, campaigns, contact sharing, WiFi access, and payment flows.
+A WordPress plugin that makes styled QR codes in the browser, with no outside QR service, and checks each one scans before you print it.
 
-Version: `4.2.0` · on WordPress.org as `anderson-qr-code-generator` (pending review)
+Version: `4.3.0` · on WordPress.org as `anderson-qr-code-generator` (pending review)
 
-## Why this plugin
+## What it does
 
-- Client-side QR generation with no external QR API required
-- Useful for landing pages, printed campaigns, events, contact sharing, and on-site QR workflows
-- Dynamic frontend interface with multiple payload types in one block or shortcode
-- Built for WordPress sites that want styling controls without server-side image generation
-
-## Features
-
-- Gutenberg block: `csqr/generator`
-- Shortcode: `[client_side_qr]`
-- Bundled local copy of `qr-code-styling` for WordPress.org-friendlier packaging
-- QR payload types:
-  - URL / plain text
-  - WiFi
-  - vCard
-  - Email
-  - SMS
-  - Crypto wallet
-  - PayPal.me
-- Built-in UTM builder for campaign QR links
-- Styling controls for:
-  - foreground color
-  - optional foreground gradient
-  - background color
-  - dot style
-  - corner eye style
-  - corner eye color
-  - logo image
-  - size
-  - error correction level
-- Optional end-user controls for:
-  - color changes
-  - size changes
-  - error correction changes
-  - transparent background
-- Export actions:
-  - PNG download
-  - SVG download
-  - clipboard image copy where browser support is available
-- Lightweight global settings page for defaults
-- Classic-editor shortcode builder for admin-side shortcode configuration
-- Theme-aware interface shell that inherits site colors and fonts by default
-- Per-instance interface shell overrides in both the block editor and shortcode builder
-- Translation-ready strings with the `anderson-qr-code-generator` text domain
+- **Scan check.** Every code is decoded right after it's drawn (bundled [jsQR](https://github.com/cozmo/jsQR)), along with contrast, inverted-color and transparency checks. Problems come with one-click fixes. Editors see the result on published codes; visitors only see a short warning when a code may not scan.
+- **Short links you can change later** (`QR Codes > Short links`). Codes point to `yoursite.com/qr/<slug>`, which redirects (302) to the destination you set. Scans are counted on your own site; link previews and bots aren't.
+- **A QR code for every page.** Turn it on per post type in settings, or per page from the editor's document panel.
+- **Print-ready downloads.** Choose a printed size (2–20 cm or inches) and get a 300 dpi PNG, an SVG sized in cm/in, or a one-page PDF, with an estimate of the scanning distance.
+- **Logos from the Media Library.** Adding a logo sets error correction to the highest level and caps the logo size so the code still scans.
+- **Saved styles** (`QR Codes > Saved styles`) for use on any block or shortcode.
+- **Two blocks:**
+  - `csqr/code` (**QR code**): a fixed code, with variations for this page, guest WiFi (network and password shown as text too), a contact card filled in from your profile, a review link and short links.
+  - `csqr/generator` (**QR code generator**): a form where visitors make codes for links (with campaign tags), WiFi, contacts, email, text messages, crypto and PayPal.
+- Theme-friendly by default: the interface uses your theme's font and colors, and the code always sits on white paper so it scans on dark themes.
 
 ## Plugin structure
 
-- `client-side-qr.php` - main plugin bootstrap, asset registration, settings page, block registration, shortcode rendering
-- `assets/qr-script.js` - frontend QR logic and accessible tab behavior
-- `assets/qr-block.js` - block editor controls and live preview
-- `assets/qr-style.css` - frontend styles and accessibility-focused UI states
-- `assets/vendor/qr-code-styling.js` - bundled QR rendering library
-- `languages/anderson-qr-code-generator.pot` - translation template for the `anderson-qr-code-generator` text domain
-- `readme.txt` - WordPress.org style plugin metadata
-- `.wordpress-org/` - banner, icon, and screenshot scaffold for WordPress.org assets
-- `THIRD_PARTY_NOTICES.md` - third-party attribution and compatibility notes
-- `uninstall.php` - plugin cleanup for stored settings
-- `CHANGELOG.md` - release history
+- `client-side-qr.php` – bootstrap, settings, asset registration, the generator block and `[client_side_qr]`
+- `includes/payloads.php` – QR content builders (WiFi and vCard escaping) and the shared code card
+- `includes/code-block.php` – the QR code block and `[qr_code]`
+- `includes/links.php` – short links (post type `csqr_link`, `/qr/<slug>` redirect and scan count)
+- `includes/page-qr.php` – the per-page QR code
+- `includes/styles.php` – saved styles
+- `includes/admin.php` – the QR Codes menu, settings page and shortcode builder
+- `assets/qr-core.js` – rendering, scan check, exports (PNG with dpi, SVG, PDF)
+- `assets/qr-ui.js` – scan-check status, print-size picker and code cards
+- `assets/qr-script.js` – the visitor generator
+- `assets/qr-editor.js`, `qr-code-block.js`, `qr-block.js`, `qr-editor-panel.js` – block editor
+- `assets/qr-admin.js`, `qr-admin.css` – admin screens
+- `assets/vendor/` – qr-code-styling 1.5.0 (MIT) and jsQR 1.4.0 (Apache-2.0)
+- `tests/e2e/` – browser tests (see below)
 
 ## Installation
 
-1. Copy this project into `wp-content/plugins/`.
-2. Ensure the folder contains `client-side-qr.php` and the `assets/` directory.
-3. Activate the plugin in `Plugins`.
-4. Optionally set global defaults in `Settings > QR Code Generator`.
-5. Use `Settings > QR Shortcode Builder` if you want to configure shortcode output visually for classic-editor workflows.
+1. Copy this project into `wp-content/plugins/`, or install the zip from `tools/build-wporg.sh`.
+2. Activate the plugin.
+3. Set your default design under `QR Codes > Settings`.
 
-## Usage
-
-### Gutenberg block
-
-1. Open a post or page in the block editor.
-2. Insert the `QR Code Generator` block.
-3. Configure design defaults, payload types, and optional end-user controls.
-4. Use the `Interface Shell` panel if you want the block to inherit the active theme or force custom shell colors and font-family values for this instance.
-5. Publish the page.
-
-### Shortcode
-
-Basic example:
+## Shortcodes
 
 ```shortcode
-[client_side_qr]
+[qr_code]                                   QR code for the current page
+[qr_code url="https://example.com" caption="Scan for the menu" downloads="true"]
+[qr_code link="menu"]                       a short link, by its slug
+[client_side_qr]                            the visitor generator
+[client_side_qr style="brand" enableCrypto="false" showTitle="false"]
 ```
 
-Custom styling example:
+`QR Codes > Shortcode builder` writes these for you. `style="id"` uses a saved style. Attribute names are case-insensitive.
 
-```shortcode
-[client_side_qr qrColorDark="#111111" qrColorLight="#ffffff" qrSize="320" qrDotStyle="rounded"]
-```
-
-Limited payload example:
-
-```shortcode
-[client_side_qr enableUrl="true" enableWifi="false" enableEmail="true" enableSms="false" enableVcard="false" enableCrypto="false" enablePaypal="false"]
-```
-
-Gradient and logo example:
-
-```shortcode
-[client_side_qr qrGradient="true" qrColorDark="#0f172a" qrColorDark2="#2563eb" logoUrl="https://example.com/logo.png"]
-```
-
-### Classic editor workflow
-
-If you are using the classic editor or a classic theme workflow, you can use the shortcode builder at `Settings > QR Shortcode Builder` to generate and preview shortcode output without hand-writing attributes.
-
-You can also control the surrounding interface shell separately from the QR itself by inheriting the active theme colors and font, or by supplying instance-level shell overrides when a page needs a specific surface, text, accent, or font treatment.
-
-## Shortcode attributes
-
-The shortcode remains backward compatible with the existing attribute names.
+### Generator attributes
 
 | Attribute | Type | Default | Description |
 | --- | --- | --- | --- |
-| `qrColorDark` | string | `#111111` | Primary foreground color |
-| `qrColorDark2` | string | `#111111` | Secondary foreground color when gradients are enabled |
-| `qrColorLight` | string | `#ffffff` | Background color |
-| `uiUseThemeColors` | bool | `true` | Inherit the surrounding theme colors for the interface shell |
-| `uiUseThemeFont` | bool | `true` | Inherit the surrounding theme font for the interface shell |
-| `uiSurfaceColor` | string | empty | Optional shell background override |
-| `uiTextColor` | string | empty | Optional shell text override |
-| `uiAccentColor` | string | empty | Optional shell accent override |
-| `uiFontFamily` | string | empty | Optional shell font-family override |
-| `qrSize` | int | `256` | Default output size in pixels |
-| `qrCorrectLevel` | string | `H` | Error correction level: `L`, `M`, `Q`, or `H` |
-| `qrDotStyle` | string | `square` | Dot style |
-| `qrEyeStyle` | string | `square` | Corner eye style |
-| `qrEyeColor` | string | empty | Optional eye color override |
-| `qrGradient` | bool | `false` | Enable a linear foreground gradient |
-| `logoUrl` | string | empty | Logo image URL |
-| `allowUserColor` | bool | `false` | Allow visitors to change colors |
-| `allowUserSize` | bool | `false` | Allow visitors to change size |
-| `allowUserCorrectLevel` | bool | `false` | Allow visitors to change error correction |
-| `enableUrl` | bool | `true` | Enable the URL / text payload |
-| `enableWifi` | bool | `true` | Enable the WiFi payload |
-| `enableEmail` | bool | `true` | Enable the Email payload |
-| `enableSms` | bool | `true` | Enable the SMS payload |
-| `enableVcard` | bool | `true` | Enable the vCard payload |
-| `enableCrypto` | bool | `true` | Enable the Crypto payload |
-| `enablePaypal` | bool | `true` | Enable the PayPal payload |
+| `title` | string | `Make a QR code` | Form heading |
+| `showTitle` | bool | `true` | Show the heading (screen readers hear it either way) |
+| `style` | string | empty | Saved style id |
+| `qrColorDark` / `qrColorDark2` / `qrColorLight` | string | `#111111` / `#111111` / `#ffffff` | Code colors (second dark color for gradients) |
+| `qrGradient` | bool | `false` | Gradient foreground |
+| `qrDotStyle`, `qrEyeStyle`, `qrEyeColor` | string | `square`, `square`, empty | Shapes and corner color |
+| `qrCorrectLevel` | string | `H` | `L`, `M`, `Q` or `H` |
+| `qrSize` | int | `256` | On-screen size in pixels |
+| `logoUrl` | string | empty | Logo image |
+| `allowUserColor`, `allowUserSize`, `allowUserCorrectLevel` | bool | `false` | What visitors may change |
+| `enableUrl`, `enableWifi`, `enableVcard`, `enableEmail`, `enableSms`, `enableCrypto`, `enablePaypal` | bool | `true` | Which kinds of code are offered |
+| `uiUseThemeColors`, `uiUseThemeFont` | bool | `true` | Inherit theme colors and font |
+| `uiSurfaceColor`, `uiTextColor`, `uiAccentColor`, `uiFontFamily` | string | empty | Overrides when not inheriting |
 
-## Accessibility notes
+## Accessibility
 
-- Payload switching now uses keyboard-accessible tabs with proper `tablist`, `tab`, and `tabpanel` semantics.
-- Form controls use visible labels instead of placeholder-only labeling.
-- Status updates for QR generation and clipboard actions are announced through a live region.
-- Focus states are styled for keyboard users.
+- Kinds of code are a keyboard tablist (arrow keys, Home, End) that scrolls sideways on phones.
+- Every field has a visible label; the scan check is a polite live region; codes are labelled with what they open.
+- Touch targets are at least 44 px; focus is always visible; motion respects reduced-motion settings.
 
-## Settings page
+## Tests
 
-The plugin includes a lightweight settings page at `Settings > QR Code Generator` for global defaults:
+```bash
+WP="wp --path=/path/to/site" bash tests/e2e/setup.sh /tmp/fixtures.json
+CSQR_FIXTURES=/tmp/fixtures.json node tests/e2e/run.cjs http://localhost:8080 admin password
+```
 
-- default QR size
-- default interface shell inheritance behavior
-- default shell background, text, accent, and font overrides
-- default foreground color
-- default background color
-- default error correction
-- payload types enabled by default
-
-These defaults apply to new instances and can still be overridden per block or shortcode.
-
-## Shortcode builder
-
-The plugin includes a shortcode builder screen at `Settings > QR Shortcode Builder`.
-
-It can be used to:
-
-- configure shortcode attributes visually
-- generate copy/paste-ready shortcode output
-- preview frontend rendering from wp-admin
-- support classic-editor and shortcode-heavy workflows more comfortably
+The setup script creates test content; the runner (Playwright) decodes the rendered codes, checks downloads, short-link redirects and scan counts, the admin screens and the block editor. CI runs it on every pull request.
 
 ## Updates
 

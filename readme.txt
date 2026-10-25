@@ -1,44 +1,33 @@
 === Anderson QR Code Generator ===
 Contributors: cptnope
-Tags: qr code, qr generator, vcard, wifi, block
+Tags: qr code, qr generator, short links, wifi, vcard
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 4.2.0
+Stable tag: 4.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Styled QR codes made in the visitor's browser, with no outside service: links, WiFi, vCards, email, SMS and payments. Block and shortcode.
+Styled QR codes made in the browser, with no outside service. Checks each code scans before you print it. Short links you can change later.
 
 == Description ==
 
-Anderson QR Code Generator helps WordPress sites publish useful QR experiences without sending QR creation to a remote API. Rendering happens in the visitor's browser, which keeps the plugin lightweight and privacy-friendly while still supporting richer QR workflows.
+Anderson QR Code Generator makes QR codes inside WordPress without sending anything to a QR service. Codes are drawn in the browser by a bundled library, and the plugin checks each one before you use it.
 
-= Key features =
+= What makes it different =
 
-- Client-side QR generation with a bundled local QR library
-- Gutenberg block and classic shortcode support
-- URL, WiFi, vCard, Email, SMS, Crypto, and PayPal payloads
-- Built-in UTM builder for campaign QR links
-- Styling controls for colors, gradients, size, dot shape, corner eyes, and logos
-- Optional end-user controls for colors, size, and error correction
-- PNG download, SVG download, and clipboard copy support where available
-- Lightweight settings page for global defaults
-- Classic-editor shortcode builder in wp-admin
-- Theme-aware interface shell that inherits site colors and fonts by default
-- Per-instance interface shell overrides in both the block editor and shortcode builder
-
-= Good fit for =
-
-- landing pages and printed campaigns
-- event materials and posters
-- contact sharing flows
-- WiFi onboarding pages
-- QR-driven marketing and site workflows
+- **Scan check.** Every code is decoded right after it's drawn. You see "Scans correctly", or what's wrong (low contrast, inverted colors, a logo that's too big) with a one-click fix.
+- **Short links you can change later.** Make a link like `yoursite.com/qr/menu`, print its code, and point it somewhere new whenever you like. Scans are counted on your own site, with no cookies and no outside service.
+- **A QR code for every page.** Turn it on for posts, pages or products and each one gets its own code, or switch it per page from the editor.
+- **Print-ready downloads.** Pick a printed size (2 to 20 cm, or inches) and get a 300 dpi PNG, an SVG at that physical size, or a PDF. The plugin tells you how far away it will scan from.
+- **Logos from the Media Library**, with error correction and logo size set automatically so the code still scans.
+- **Saved styles.** Save colors, shapes and a logo once, then use them on any block or shortcode.
+- **Ready-made blocks** for this page, guest WiFi (with the network and password shown for people who can't scan), a contact card filled in from your profile, a "leave a review" link and short links.
+- **A visitor generator** for links (with campaign tracking), WiFi, contacts, email, text messages, crypto and PayPal.
 
 = Free, open source, no account =
 
-Everything in the plugin is free. There's no paid version, no sign-up and no tracking. QR codes are drawn in the visitor's browser by a bundled copy of [qr-code-styling](https://github.com/kozakdenys/qr-code-styling), so nothing about them is sent anywhere. Development happens on [GitHub](https://github.com/CptNope/Client-Side-QR).
+Everything in the plugin is free. There's no paid version, no sign-up and no tracking. Development happens on [GitHub](https://github.com/CptNope/Client-Side-QR).
 
 = Need hands-on help? =
 
@@ -48,51 +37,72 @@ The plugin is made by [Jeremy Anderson](https://jeremyanderson.tech/), who build
 
 1. Upload the plugin folder to `/wp-content/plugins/`, or upload the ZIP file in `Plugins > Add New Plugin`.
 2. Activate the plugin through the `Plugins` screen.
-3. Optionally set plugin defaults in `Settings > QR Code Generator`.
-4. Add the `QR Code Generator` block or use the `[client_side_qr]` shortcode.
+3. Set your default design under `QR Codes > Settings`.
+4. Add the `QR code` block (a fixed code) or the `QR code generator` block (a form for visitors). In the classic editor, use `[qr_code]` or `[client_side_qr]`; `QR Codes > Shortcode builder` writes them for you.
 
-== Source code and third-party library ==
+== Source code and third-party libraries ==
 
-The file `assets/vendor/qr-code-styling.js` is the unmodified, minified build of [qr-code-styling](https://github.com/kozakdenys/qr-code-styling) 1.5.0 by Denys Kozak (MIT license; the notice ships in `assets/vendor/qr-code-styling-LICENSE.txt`). Its human-readable source is at https://github.com/kozakdenys/qr-code-styling/tree/v1.5.0. Everything else in the plugin is unminified.
+The plugin bundles two unmodified open-source libraries:
+
+- `assets/vendor/qr-code-styling.js` is the minified build of [qr-code-styling](https://github.com/kozakdenys/qr-code-styling) 1.5.0 by Denys Kozak (MIT license, notice in `assets/vendor/qr-code-styling-LICENSE.txt`). Its human-readable source is at https://github.com/kozakdenys/qr-code-styling/tree/v1.5.0.
+- `assets/vendor/jsQR.js` is [jsQR](https://github.com/cozmo/jsQR) 1.4.0 by Cosmo Wolfe (Apache License 2.0, notice in `assets/vendor/jsQR-LICENSE.txt`), used for the scan check. It loads only when a code is checked.
+
+Everything else in the plugin is unminified.
 
 == External services ==
 
-The plugin doesn't contact any outside service. If you set a logo image by web address, visitors' browsers load that image from the address you entered.
+The plugin doesn't contact any outside service. Short-link scans are counted in your own WordPress database (a number and the time of the last scan; nothing about the person scanning is stored). If you set a logo image by web address, browsers load that image from the address you entered.
 
 == Frequently Asked Questions ==
 
 = Does this plugin call a remote QR API? =
 
-No. QR rendering happens client-side in the browser.
+No. Codes are drawn and checked in the browser.
 
-= Does the plugin still use a CDN? =
+= What does the scan check do? =
 
-No. Version 4.1.0 and later bundle the `qr-code-styling` library locally inside the plugin.
+After drawing a code, the plugin reads it back the way a phone camera would and compares the result with what it should say. It also checks color contrast and transparency. If something is off it explains the problem and offers a fix.
 
-= Can I use the plugin without Gutenberg? =
+= Can I change where a printed code goes? =
 
-Yes. The `[client_side_qr]` shortcode remains supported.
+Yes, if you made it from a short link (`QR Codes > Short links`). The code points to your site, so changing the destination later doesn't change the code.
 
-= Can visitors download the generated QR code? =
+= Do short links count scans? =
 
-Yes. PNG and SVG downloads are supported, and clipboard image copy is available when the browser supports the required APIs.
+Yes: a total and the last scan time, stored on your site. Link previews and search bots aren't counted.
 
-= Is there a helper for classic editor shortcode use? =
+= What size should I print? =
 
-Yes. The plugin now includes a shortcode builder in `Settings > QR Shortcode Builder`.
+Pick the size in the download panel; it shows roughly how far away a phone can scan it. As a rule, a code scans from about ten times its width.
 
-= Can I inherit the active theme styles but still override them when needed? =
+= Can I use the plugin without the block editor? =
 
-Yes. The frontend shell inherits theme colors and fonts by default, and both the block editor and shortcode builder now include override controls for the surrounding interface shell.
+Yes. Use `[qr_code]` for a fixed code and `[client_side_qr]` for the visitor generator. Both accept `style="your-style-id"`.
+
+= Will it match my theme? =
+
+The generator and code cards use your theme's font and colors by default. You can override them under `QR Codes > Settings`.
 
 == Screenshots ==
 
-1. Frontend QR generator with accessible payload tabs and exports
-2. Gutenberg block controls for design and payload defaults
-3. Lightweight settings page for site-wide defaults
-4. Shortcode builder for classic-editor workflows
+1. The visitor generator with the scan check and print-size downloads
+2. The QR code block in the editor, with design controls and the scan check
+3. A short link: change where it goes and see how often it's scanned
+4. Settings with a live preview that checks the code as you change it
 
 == Changelog ==
+
+= 4.3.0 =
+
+- New QR code block with ready-made versions for this page, guest WiFi, a contact card, a review link and short links. Also available as `[qr_code]`.
+- Scan check: every code is read back after it's drawn, with one-click fixes for problems.
+- Short links at `yoursite.com/qr/…` that you can redirect later, with a private scan count.
+- Optional QR code at the end of posts, pages or other post types, switchable per page.
+- Print-ready downloads: choose a printed size and get a 300 dpi PNG, a sized SVG or a PDF.
+- Logos from the Media Library, with safe size and error correction set automatically.
+- Saved styles for reuse across blocks and shortcodes.
+- Redesigned generator and code cards, and a new QR Codes menu in wp-admin (the old Settings links redirect).
+- Browser tests run in CI.
 
 = 4.2.0 =
 
@@ -144,6 +154,10 @@ Yes. The frontend shell inherits theme colors and fonts by default, and both the
 - Added per-block payload type toggles.
 
 == Upgrade Notice ==
+
+= 4.3.0 =
+
+Adds a QR code block, scan check, editable short links, page QR codes and print-ready downloads. Plugin settings move to the new QR Codes menu.
 
 = 4.2.0 =
 
