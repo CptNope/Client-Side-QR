@@ -2,7 +2,7 @@
 
 A WordPress plugin that makes styled QR codes in the browser, with no outside QR service, and checks each one scans before you print it.
 
-Version: `4.3.0` · on WordPress.org as `anderson-qr-code-generator` (pending review)
+Version: `4.4.0` · on WordPress.org as `anderson-qr-code-generator` (pending review)
 
 ## What it does
 
@@ -17,6 +17,45 @@ Version: `4.3.0` · on WordPress.org as `anderson-qr-code-generator` (pending re
   - `csqr/generator` (**QR code generator**): a form where visitors make codes for links (with campaign tags), WiFi, contacts, email, text messages, crypto and PayPal.
 - Theme-friendly by default: the interface uses your theme's font and colors, and the code always sits on white paper so it scans on dark themes.
 
+### Short links that do more (4.4.0)
+
+- **Scan history and spots:** scans per day (numbers only, kept 400 days) and per spot. A spot is the same link printed somewhere else, with its own code: `/qr/menu/window`.
+- **Rules:** by day and time (site time zone), by phone (iPhone or Android), and an end date with a message or another address. Order: ended → phone → schedule → destination.
+- **Contact cards:** a short link that answers with a `.vcf` file (with photo), so the printed code stays small and editable.
+- **Bulk:** `QR Codes > Bulk create` imports a CSV (any link field is a column), exports them all, and the print sheet lays codes out as a cut-out grid, table tents or name badges on Letter or A4, or downloads a zip.
+- **WooCommerce:** product codes, shelf labels (name, price, SKU), order thank-you cards.
+- **Switching plugins:** `[kaya_qrcode]`, `[kaya_qrcode_dynamic]` and `[su_qrcode]` are drawn when their plugins are off.
+
+### REST API
+
+All routes need a user who can `manage_options` (use an Application Password from outside the site).
+
+```
+GET    /wp-json/anderson-qr/v1/links                list (search, page, per_page)
+POST   /wp-json/anderson-qr/v1/links                create   {"name":"Menu","destination":"https://…","placements":"Window, Flyer"}
+GET    /wp-json/anderson-qr/v1/links/{id}           one link
+PATCH  /wp-json/anderson-qr/v1/links/{id}           update only the fields sent
+DELETE /wp-json/anderson-qr/v1/links/{id}           trash (?force=true deletes)
+GET    /wp-json/anderson-qr/v1/links/{id}/stats     ?days=30 → daily scans and spots
+```
+
+Fields: `name`, `slug`, `status`, `destination`, `kind` (`url` or `contact`), `placements`, `schedule` (`[{"days":[1,2,3,4,5],"from":"11:00","to":"15:00","url":"…"}]`), `ends`, `after_end`, `end_message`, `ios_url`, `android_url`, `contact`, `contact_photo`.
+
+### WP-CLI
+
+```bash
+wp qr link list --format=csv
+wp qr link create "Dinner menu" https://example.com/dinner --placements="Window, Table cards"
+wp qr link update menu --destination=https://example.com/winter --ends="2026-12-31 23:59"
+wp qr link stats menu --days=7
+wp qr link delete menu
+wp qr import links.csv --update
+```
+
+### Extending
+
+Features plug into a shared link model: `csqr_link_schema` (add a stored field), `csqr_link_target` (decide where a scan goes), `csqr_serve_link`, `csqr_scan_counted`, `csqr_link_fields` (edit-screen rows), `csqr_print_items` (print-sheet sources) and `csqr_compat_shortcodes`.
+
 ## Plugin structure
 
 - `client-side-qr.php` – bootstrap, settings, asset registration, the generator block and `[client_side_qr]`
@@ -25,6 +64,9 @@ Version: `4.3.0` · on WordPress.org as `anderson-qr-code-generator` (pending re
 - `includes/links.php` – short links (post type `csqr_link`, `/qr/<slug>` redirect and scan count)
 - `includes/page-qr.php` – the per-page QR code
 - `includes/styles.php` – saved styles
+- `includes/link-stats.php`, `link-rules.php`, `link-contact.php` – scan history and spots, rules, contact cards
+- `includes/bulk.php` – bulk create, export and print sheets (with `assets/qr-print.js`, `qr-print.css`)
+- `includes/woocommerce.php`, `compat.php`, `rest.php`, `cli.php` – WooCommerce, other plugins' shortcodes, REST API, WP-CLI
 - `includes/admin.php` – the QR Codes menu, settings page and shortcode builder
 - `assets/qr-core.js` – rendering, scan check, exports (PNG with dpi, SVG, PDF)
 - `assets/qr-ui.js` – scan-check status, print-size picker and code cards

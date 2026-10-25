@@ -3,7 +3,7 @@
  * Plugin Name:       Anderson QR Code Generator
  * Plugin URI:        https://github.com/CptNope/Client-Side-QR
  * Description:       Generate privacy-friendly QR codes in the browser with a Gutenberg block and shortcode for campaigns, contact sharing, payments, and QR-driven site workflows.
- * Version:           4.3.0
+ * Version:           4.4.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Jeremy Anderson
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CSQR_VERSION', '4.3.0' );
+define( 'CSQR_VERSION', '4.4.0' );
 define( 'CSQR_OPTION_NAME', 'csqr_settings' );
 define( 'CSQR_RELEASE_TRANSIENT', 'csqr_github_release_data' );
 define( 'CSQR_RELEASE_CRON_HOOK', 'csqr_check_github_release_event' );
@@ -33,6 +33,16 @@ define( 'CSQR_URL', plugin_dir_url( __FILE__ ) );
 require_once CSQR_DIR . 'includes/payloads.php';
 require_once CSQR_DIR . 'includes/styles.php';
 require_once CSQR_DIR . 'includes/links.php';
+require_once CSQR_DIR . 'includes/link-stats.php';
+require_once CSQR_DIR . 'includes/link-rules.php';
+require_once CSQR_DIR . 'includes/link-contact.php';
+require_once CSQR_DIR . 'includes/bulk.php';
+require_once CSQR_DIR . 'includes/woocommerce.php';
+require_once CSQR_DIR . 'includes/compat.php';
+require_once CSQR_DIR . 'includes/rest.php';
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	require_once CSQR_DIR . 'includes/cli.php';
+}
 require_once CSQR_DIR . 'includes/code-block.php';
 require_once CSQR_DIR . 'includes/page-qr.php';
 require_once CSQR_DIR . 'includes/admin.php';
@@ -460,6 +470,11 @@ function csqr_core_strings() {
 		'downloadSvg'       => __( 'SVG', 'anderson-qr-code-generator' ),
 		'downloadPdf'       => __( 'PDF', 'anderson-qr-code-generator' ),
 		'copyImage'         => __( 'Copy', 'anderson-qr-code-generator' ),
+		'zipWorking'        => __( 'Making the files…', 'anderson-qr-code-generator' ),
+		/* translators: 1: codes made so far, 2: total */
+		'zipProgress'       => __( 'Made %1$s of %2$s…', 'anderson-qr-code-generator' ),
+		/* translators: %1$s: number of codes */
+		'zipDone'           => __( 'Downloaded %1$s codes as PNG and SVG.', 'anderson-qr-code-generator' ),
 		'fillFirst'         => __( 'Fill in the form to download your code.', 'anderson-qr-code-generator' ),
 		'editorOnly'        => __( 'Only people who can edit the site see this check.', 'anderson-qr-code-generator' ),
 		/* translators: %1$s: the web address the QR code opens */

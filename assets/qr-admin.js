@@ -194,7 +194,86 @@
 		build();
 	}
 
+	/* Short link screen ----------------------------------------------- */
+
+	function mountLinkForm(form) {
+		var radios = form.querySelectorAll('input[name="csqr[kind]"]');
+		function sync() {
+			var kind = form.getAttribute('data-csqr-kind') || 'url';
+			Array.prototype.forEach.call(radios, function (r) {
+				if (r.checked) {
+					kind = r.value;
+				}
+			});
+			// Rows for other kinds are hidden, here and in the rules box.
+			Array.prototype.forEach.call(document.querySelectorAll('[data-csqr-for]'), function (row) {
+				row.hidden = row.getAttribute('data-csqr-for') !== kind;
+			});
+			var dest = document.getElementById('csqr-destination');
+			if (dest) {
+				dest.required = kind === 'url';
+			}
+		}
+		Array.prototype.forEach.call(radios, function (r) {
+			r.addEventListener('change', sync);
+		});
+		sync();
+	}
+
+	function mountPlaces(box) {
+		box.addEventListener('click', function (e) {
+			var btn = e.target.closest('[data-csqr-place-remove]');
+			if (btn) {
+				btn.closest('li').remove();
+			}
+		});
+	}
+
+	function mountPhoto(wrap) {
+		var input = wrap.querySelector('input[type="hidden"]');
+		var preview = wrap.querySelector('.csqr-photo__preview');
+		var pick = wrap.querySelector('[data-csqr-photo-pick]');
+		var clear = wrap.querySelector('[data-csqr-photo-clear]');
+		var frame;
+		if (!window.wp || !window.wp.media) {
+			pick.hidden = true;
+			return;
+		}
+		pick.addEventListener('click', function () {
+			if (!frame) {
+				frame = window.wp.media({
+					title: i18n.choosePhoto || 'Choose a photo',
+					button: { text: i18n.useLogo || 'Use this image' },
+					library: { type: 'image' },
+					multiple: false
+				});
+				frame.on('select', function () {
+					var file = frame.state().get('selection').first().toJSON();
+					var thumb = file.sizes && (file.sizes.thumbnail || file.sizes.medium);
+					input.value = file.id;
+					preview.innerHTML = '';
+					var img = document.createElement('img');
+					img.src = thumb ? thumb.url : file.url;
+					img.alt = '';
+					img.width = 64;
+					img.height = 64;
+					preview.appendChild(img);
+					clear.hidden = false;
+				});
+			}
+			frame.open();
+		});
+		clear.addEventListener('click', function () {
+			input.value = '0';
+			preview.innerHTML = '';
+			clear.hidden = true;
+		});
+	}
+
 	document.addEventListener('DOMContentLoaded', function () {
+		Array.prototype.forEach.call(document.querySelectorAll('.csqr-link-form'), mountLinkForm);
+		Array.prototype.forEach.call(document.querySelectorAll('[data-csqr-places]'), mountPlaces);
+		Array.prototype.forEach.call(document.querySelectorAll('[data-csqr-photo]'), mountPhoto);
 		Array.prototype.forEach.call(document.querySelectorAll('[data-csqr-media]'), mountMedia);
 		Array.prototype.forEach.call(document.querySelectorAll('[data-csqr-preview]'), mountPreview);
 		Array.prototype.forEach.call(document.querySelectorAll('[data-csqr-builder]'), mountBuilder);

@@ -92,6 +92,8 @@ jobs:
           wp core install --path="$SITE" --url="$BASE" --title="Test site" --admin_user=admin --admin_password=password --admin_email=ci@example.com --skip-email --quiet
           wp plugin install build/anderson-qr-code-generator.zip --activate --path="$SITE"
           wp rewrite structure '/%postname%/' --path="$SITE"
+          # WooCommerce, for the product code and label tests.
+          wp plugin install woocommerce --activate --path="$SITE" --quiet
           WP="wp --path=$SITE" bash tests/e2e/setup.sh "$RUNNER_TEMP/fixtures.json" || { cat "$RUNNER_TEMP/fixtures.json"; exit 1; }
       - name: Start the site
         run: |
