@@ -526,5 +526,9 @@ async function shot(page, name) {
 	process.exit(fail ? 1 : 0);
 })().catch((e) => {
 	console.error(e);
+	if (process.env.GITHUB_ACTIONS) {
+		// Name the step that crashed, and what passed before it.
+		console.log('::error title=Browser tests crashed::' + String(e && e.message ? e.message : e).split('\n').slice(0, 3).join(' | ').slice(0, 600) + ' (after ' + pass + ' passing checks)');
+	}
 	process.exit(1);
 });
