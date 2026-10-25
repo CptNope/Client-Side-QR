@@ -101,6 +101,7 @@ function csqr_admin_enqueue_assets() {
 			'i18n' => array(
 				'chooseLogo' => __( 'Choose a logo', 'anderson-qr-code-generator' ),
 				'useLogo'    => __( 'Use this image', 'anderson-qr-code-generator' ),
+				'choosePhoto' => __( 'Choose a photo', 'anderson-qr-code-generator' ),
 			),
 		)
 	);
@@ -256,6 +257,7 @@ function csqr_render_settings_page() {
 			<input type="hidden" name="<?php echo esc_attr( $o . '[qrSize]' ); ?>" value="<?php echo esc_attr( (string) $s['qrSize'] ); ?>" />
 			<?php submit_button(); ?>
 		</form>
+		<?php do_action( 'csqr_settings_after' ); ?>
 		<?php csqr_render_about(); ?>
 	</div>
 	<?php

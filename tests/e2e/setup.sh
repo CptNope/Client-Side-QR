@@ -8,6 +8,12 @@ OUT="${1:-/tmp/csqr-fixtures.json}"
 WP="${WP:-wp}"
 
 $WP rewrite structure '/%postname%/' >/dev/null 2>&1 || true
+
+# Short links made with the plugin's own WP-CLI commands (which tests them too).
+$WP qr link create "Lunch specials" https://example.com/lunch --slug=lunch --placements="Front window, Table cards" --ios_url=https://apps.apple.com/app/id1 --android_url="https://play.google.com/store/apps/details?id=x" >/dev/null
+$WP qr link create "Happy hour" https://example.com/default --slug=happy --schedule='[{"days":[],"url":"https://example.com/scheduled"}]' >/dev/null
+$WP qr link create "Fall offer" https://example.com/offer --slug=fall-offer --ends=2020-01-01 --end_message="Our fall offer has ended." >/dev/null
+$WP qr link create "Jeremy Anderson" --slug=card --kind=contact --contact='{"firstName":"Jeremy","lastName":"Anderson","phone":"+1 508 555 0100","email":"info@example.com"}' >/dev/null
 $WP eval '
 $make = function ( $title, $blocks, $type = "page" ) {
 	$content = "";
@@ -36,8 +42,26 @@ $logo = wp_get_attachment_url( $att );
 update_option( "csqr_styles", array( "brand" => array( "name" => "Brand", "design" => csqr_sanitize_design( array( "qrColorDark" => "#1d3a8a", "logoUrl" => $logo, "logoSize" => 0.22 ) ) ) ) );
 $styled = $make( "Styled", array( array( "csqr/code", array( "type" => "url", "url" => "https://example.com/brand", "styleId" => "brand" ) ) ) );
 $shorts = wp_insert_post( array( "post_type" => "page", "post_status" => "publish", "post_title" => "Shortcodes", "post_content" => "[qr_code url=\"https://example.com/short\" caption=\"From a shortcode\"]\n\n[qr_code link=\"menu\"]\n\n[client_side_qr qrColorDark=\"#123456\" enableWifi=\"false\"]" ) );
+$compat = wp_insert_post( array( "post_type" => "page", "post_status" => "publish", "post_title" => "Old plugin shortcodes", "post_content" => "[kaya_qrcode content=\"https://example.com/kaya\" title=\"Kaya code\"]\n\n[su_qrcode data=\"https://example.com/su\" title=\"SU code\" color=\"#1d3a8a\"]" ) );
+$product = 0;
+if ( class_exists( "WC_Product_Simple" ) ) {
+	$p = new WC_Product_Simple();
+	$p->set_name( "Espresso beans" );
+	$p->set_regular_price( "12.50" );
+	$p->set_sku( "BEANS-1" );
+	$p->set_status( "publish" );
+	$product = $p->save();
+	$s = get_option( "csqr_settings", array() );
+	$s["pageQrTypes"] = array( "product" );
+	update_option( "csqr_settings", $s );
+}
 flush_rewrite_rules( false );
 echo wp_json_encode( array(
+	"lunch"       => csqr_find_link( "lunch" ),
+	"lunchUrl"    => csqr_link_url( csqr_find_link( "lunch" ) ),
+	"compat"      => get_permalink( $compat ),
+	"product"     => $product,
+	"productUrl"  => $product ? get_permalink( $product ) : "",
 	"generator"   => get_permalink( $gen ),
 	"wifi"        => get_permalink( $wifi ),
 	"wifiPayload" => csqr_build_payload( "wifi", array( "ssid" => "Cafe; \"Guest\"", "password" => "p@ss:wo,rd" ) ),

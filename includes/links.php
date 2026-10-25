@@ -75,8 +75,11 @@ function csqr_register_links() {
 		)
 	);
 
+	$prefix = preg_quote( csqr_get_settings()['linkPrefix'], '/' );
 	add_rewrite_tag( '%csqr_link%', '([^&/]+)' );
-	add_rewrite_rule( '^' . preg_quote( csqr_get_settings()['linkPrefix'], '/' ) . '/([^/]+)/?$', 'index.php?csqr_link=$matches[1]', 'top' );
+	add_rewrite_tag( '%csqr_place%', '([^&/]+)' );
+	add_rewrite_rule( '^' . $prefix . '/([^/]+)/([^/]+)/?$', 'index.php?csqr_link=$matches[1]&csqr_place=$matches[2]', 'top' );
+	add_rewrite_rule( '^' . $prefix . '/([^/]+)/?$', 'index.php?csqr_link=$matches[1]', 'top' );
 }
 add_action( 'init', 'csqr_register_links' );
 
@@ -116,15 +119,61 @@ add_action( 'init', 'csqr_flush_links_if_needed', 99 );
  * @param int $post_id Short link id.
  * @return string
  */
-function csqr_link_url( $post_id ) {
+function csqr_link_url( $post_id, $place = '' ) {
 	$post = get_post( $post_id );
 	if ( ! $post || CSQR_LINK_TYPE !== $post->post_type || '' === $post->post_name ) {
 		return '';
 	}
+	$place = sanitize_title( (string) $place );
 	if ( get_option( 'permalink_structure' ) ) {
-		return home_url( user_trailingslashit( csqr_get_settings()['linkPrefix'] . '/' . $post->post_name ) );
+		return home_url( user_trailingslashit( csqr_get_settings()['linkPrefix'] . '/' . $post->post_name . ( '' !== $place ? '/' . $place : '' ) ) );
 	}
-	return add_query_arg( 'csqr_link', $post->post_name, home_url( '/' ) );
+	$args = array( 'csqr_link' => $post->post_name );
+	if ( '' !== $place ) {
+		$args['csqr_place'] = $place;
+	}
+	return add_query_arg( $args, home_url( '/' ) );
+}
+
+/**
+ * What kind of short link this is: "url" (redirects) or "contact" (serves a
+ * contact card).
+ *
+ * @param int $post_id Short link id.
+ * @return string
+ */
+function csqr_link_kind( $post_id ) {
+	$kind = (string) get_post_meta( $post_id, '_csqr_kind', true );
+	return in_array( $kind, array_keys( csqr_link_kinds() ), true ) ? $kind : 'url';
+}
+
+/**
+ * Kinds of short link.
+ *
+ * @return array<string, string>
+ */
+function csqr_link_kinds() {
+	return apply_filters(
+		'csqr_link_kinds',
+		array(
+			'url'     => __( 'Web address', 'anderson-qr-code-generator' ),
+			'contact' => __( 'Contact card', 'anderson-qr-code-generator' ),
+		)
+	);
+}
+
+/**
+ * Decide what a scan of this link gets. Other features (schedules, phone
+ * links, contact cards) hook into csqr_link_target.
+ *
+ * @param WP_Post $post  Short link.
+ * @param string  $place Placement slug, if any.
+ * @return array{type: string, url?: string, message?: string}
+ */
+function csqr_link_target( $post, $place = '' ) {
+	$dest   = csqr_link_destination( $post->ID );
+	$target = '' !== $dest ? array( 'type' => 'redirect', 'url' => $dest ) : array( 'type' => 'missing' );
+	return apply_filters( 'csqr_link_target', $target, $post, $place );
 }
 
 /**
@@ -144,17 +193,22 @@ function csqr_link_destination( $post_id ) {
  */
 function csqr_follow_link() {
 	$name = get_query_var( 'csqr_link' );
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Public redirect, no state change beyond a counter.
 	if ( '' === $name || null === $name ) {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public redirect, no state change beyond a counter.
 		$name = isset( $_GET['csqr_link'] ) ? sanitize_title( wp_unslash( $_GET['csqr_link'] ) ) : '';
 	}
 	if ( '' === $name ) {
 		return;
 	}
-	$post = get_page_by_path( sanitize_title( $name ), OBJECT, CSQR_LINK_TYPE );
-	$dest = $post && 'publish' === $post->post_status ? csqr_link_destination( $post->ID ) : '';
+	$place = get_query_var( 'csqr_place' );
+	if ( '' === $place || null === $place ) {
+		$place = isset( $_GET['csqr_place'] ) ? sanitize_title( wp_unslash( $_GET['csqr_place'] ) ) : '';
+	}
+	// phpcs:enable WordPress.Security.NonceVerification.Recommended
+	$post   = get_page_by_path( sanitize_title( $name ), OBJECT, CSQR_LINK_TYPE );
+	$target = $post && 'publish' === $post->post_status ? csqr_link_target( $post, sanitize_title( (string) $place ) ) : array( 'type' => 'missing' );
 
-	if ( '' === $dest ) {
+	if ( 'missing' === $target['type'] ) {
 		global $wp_query;
 		$wp_query->set_404();
 		status_header( 404 );
@@ -163,17 +217,51 @@ function csqr_follow_link() {
 	}
 
 	if ( csqr_is_real_scan() ) {
-		// Count only: no IP, browser or anything else about the person is stored.
-		$count = (int) get_post_meta( $post->ID, '_csqr_scans', true );
-		update_post_meta( $post->ID, '_csqr_scans', $count + 1 );
-		update_post_meta( $post->ID, '_csqr_last_scan', time() );
+		csqr_count_scan( $post->ID, sanitize_title( (string) $place ) );
 	}
 
 	nocache_headers();
 	header( 'X-Robots-Tag: noindex, nofollow' );
-	// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- An admin chose this destination; short links point off-site by design.
-	wp_redirect( $dest, 302, 'Anderson QR Code Generator' );
-	exit;
+	do_action( 'csqr_serve_link', $target, $post );
+
+	if ( 'redirect' === $target['type'] && ! empty( $target['url'] ) ) {
+		// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- An admin chose this destination; short links point off-site by design.
+		wp_redirect( $target['url'], 302, 'Anderson QR Code Generator' );
+		exit;
+	}
+	csqr_link_message_page( isset( $target['message'] ) ? $target['message'] : __( 'This code isn’t active right now.', 'anderson-qr-code-generator' ), isset( $target['status'] ) ? (int) $target['status'] : 410 );
+}
+
+/**
+ * A plain page for a code that has nowhere to go (for example an offer that
+ * has ended).
+ *
+ * @param string $message Message for the person who scanned.
+ * @param int    $status  HTTP status.
+ * @return void
+ */
+function csqr_link_message_page( $message, $status = 410 ) {
+	wp_die(
+		'<p style="font-size:1.25em;line-height:1.5">' . esc_html( $message ) . '</p><p><a href="' . esc_url( home_url( '/' ) ) . '">' . esc_html( get_bloginfo( 'name' ) ) . '</a></p>',
+		esc_html( get_bloginfo( 'name' ) ),
+		array( 'response' => $status )
+	);
+}
+
+/**
+ * Count one scan: the total, the time of the last scan, and (in
+ * link-stats.php) daily and per-placement counts.
+ *
+ * @param int    $post_id Short link id.
+ * @param string $place   Placement slug.
+ * @return void
+ */
+function csqr_count_scan( $post_id, $place = '' ) {
+	// Count only: no IP, browser or anything else about the person is stored.
+	$count = (int) get_post_meta( $post_id, '_csqr_scans', true );
+	update_post_meta( $post_id, '_csqr_scans', $count + 1 );
+	update_post_meta( $post_id, '_csqr_last_scan', time() );
+	do_action( 'csqr_scan_counted', $post_id, $place );
 }
 add_action( 'template_redirect', 'csqr_follow_link', 1 );
 
@@ -210,7 +298,153 @@ function csqr_link_meta_boxes() {
 add_action( 'add_meta_boxes_' . CSQR_LINK_TYPE, 'csqr_link_meta_boxes' );
 
 /**
- * Destination box.
+ * Fields a short link stores, keyed by the name used in forms, the REST API,
+ * WP-CLI and CSV imports. Features add theirs with the csqr_link_schema filter.
+ *
+ * Each field: meta (post meta key), type (string|url|int|array|bool), and
+ * optional sanitize (callable).
+ *
+ * @return array<string, array<string, mixed>>
+ */
+function csqr_link_schema() {
+	static $schema = null;
+	if ( null === $schema ) {
+		$schema = apply_filters(
+			'csqr_link_schema',
+			array(
+				'destination' => array(
+					'meta' => '_csqr_destination',
+					'type' => 'url',
+				),
+				'kind'        => array(
+					'meta'     => '_csqr_kind',
+					'type'     => 'string',
+					'sanitize' => function ( $v ) {
+						return array_key_exists( (string) $v, csqr_link_kinds() ) ? (string) $v : 'url';
+					},
+				),
+			)
+		);
+	}
+	return $schema;
+}
+
+/**
+ * Sanitize one field value by its schema type.
+ *
+ * @param array<string, mixed> $field Schema entry.
+ * @param mixed                $value Raw value.
+ * @return mixed
+ */
+function csqr_link_sanitize_field( $field, $value ) {
+	if ( isset( $field['sanitize'] ) && is_callable( $field['sanitize'] ) ) {
+		return call_user_func( $field['sanitize'], $value );
+	}
+	switch ( $field['type'] ) {
+		case 'url':
+			return esc_url_raw( trim( (string) $value ), array( 'http', 'https' ) );
+		case 'int':
+			return (int) $value;
+		case 'bool':
+			return in_array( $value, array( true, 1, '1', 'true', 'yes', 'on' ), true );
+		case 'array':
+			return is_array( $value ) ? $value : array();
+		default:
+			return sanitize_text_field( (string) $value );
+	}
+}
+
+/**
+ * Everything about a short link, as one array (for the API, CLI and exports).
+ *
+ * @param int $post_id Short link id.
+ * @return array<string, mixed>|null
+ */
+function csqr_get_link( $post_id ) {
+	$post = get_post( $post_id );
+	if ( ! $post || CSQR_LINK_TYPE !== $post->post_type ) {
+		return null;
+	}
+	$out = array(
+		'id'        => $post->ID,
+		'name'      => $post->post_title,
+		'slug'      => $post->post_name,
+		'status'    => $post->post_status,
+		'url'       => csqr_link_url( $post->ID ),
+		'scans'     => (int) get_post_meta( $post->ID, '_csqr_scans', true ),
+		'last_scan' => (int) get_post_meta( $post->ID, '_csqr_last_scan', true ),
+	);
+	foreach ( csqr_link_schema() as $key => $field ) {
+		$value       = get_post_meta( $post->ID, $field['meta'], true );
+		$out[ $key ] = '' === $value && 'array' === $field['type'] ? array() : $value;
+	}
+	$out['kind'] = csqr_link_kind( $post->ID );
+	return apply_filters( 'csqr_get_link', $out, $post );
+}
+
+/**
+ * Create or update a short link from an array. Unknown keys are ignored.
+ *
+ * @param array<string, mixed> $args { name, slug, status, plus any schema field }.
+ * @param int                  $post_id Existing link to update, or 0.
+ * @return int|WP_Error Link id.
+ */
+function csqr_save_link( $args, $post_id = 0 ) {
+	$args   = is_array( $args ) ? $args : array();
+	$schema = csqr_link_schema();
+	$meta   = array();
+	foreach ( $schema as $key => $field ) {
+		if ( array_key_exists( $key, $args ) ) {
+			$meta[ $field['meta'] ] = csqr_link_sanitize_field( $field, $args[ $key ] );
+		}
+	}
+	$kind = isset( $meta['_csqr_kind'] ) ? $meta['_csqr_kind'] : ( $post_id ? csqr_link_kind( $post_id ) : 'url' );
+	$dest = isset( $meta['_csqr_destination'] ) ? $meta['_csqr_destination'] : ( $post_id ? csqr_link_destination( $post_id ) : '' );
+	if ( 'url' === $kind && '' === $dest ) {
+		return new WP_Error( 'csqr_no_destination', __( 'A short link needs a destination (an http or https address).', 'anderson-qr-code-generator' ) );
+	}
+
+	$post = array(
+		'post_type'  => CSQR_LINK_TYPE,
+		'meta_input' => $meta,
+	);
+	if ( $post_id ) {
+		$post['ID'] = $post_id;
+	} else {
+		$post['post_status'] = 'publish';
+	}
+	if ( isset( $args['name'] ) ) {
+		$post['post_title'] = sanitize_text_field( (string) $args['name'] );
+	}
+	if ( isset( $args['status'] ) && in_array( $args['status'], array( 'publish', 'draft' ), true ) ) {
+		$post['post_status'] = $args['status'];
+	}
+	if ( ! empty( $args['slug'] ) ) {
+		$post['post_name'] = sanitize_title( (string) $args['slug'] );
+	} elseif ( ! $post_id && ! empty( $post['post_title'] ) ) {
+		$post['post_name'] = sanitize_title( $post['post_title'] );
+	}
+	$id = $post_id ? wp_update_post( wp_slash( $post ), true ) : wp_insert_post( wp_slash( $post ), true );
+	if ( ! is_wp_error( $id ) ) {
+		do_action( 'csqr_link_saved', (int) $id, $args );
+	}
+	return $id;
+}
+
+/**
+ * Find a short link by its address name.
+ *
+ * @param string $slug Slug.
+ * @return int Link id or 0.
+ */
+function csqr_find_link( $slug ) {
+	$post = get_page_by_path( sanitize_title( $slug ), OBJECT, CSQR_LINK_TYPE );
+	return $post ? (int) $post->ID : 0;
+}
+
+/**
+ * Destination box: kind, where it goes, address, scans. Features add rows
+ * with the csqr_link_fields action.
  *
  * @param WP_Post $post Short link.
  * @return void
@@ -218,19 +452,35 @@ add_action( 'add_meta_boxes_' . CSQR_LINK_TYPE, 'csqr_link_meta_boxes' );
 function csqr_link_destination_box( $post ) {
 	wp_nonce_field( 'csqr_link_save', 'csqr_link_nonce' );
 	$dest  = csqr_link_destination( $post->ID );
+	$kind  = csqr_link_kind( $post->ID );
 	$url   = csqr_link_url( $post->ID );
 	$scans = (int) get_post_meta( $post->ID, '_csqr_scans', true );
 	$last  = (int) get_post_meta( $post->ID, '_csqr_last_scan', true );
 	$base  = get_option( 'permalink_structure' ) ? home_url( '/' . csqr_get_settings()['linkPrefix'] . '/' ) : home_url( '/?csqr_link=' );
+	$kinds = csqr_link_kinds();
 	?>
-	<table class="form-table" role="presentation">
-		<tr>
+	<table class="form-table csqr-link-form" role="presentation" data-csqr-kind="<?php echo esc_attr( $kind ); ?>">
+		<?php if ( count( $kinds ) > 1 ) : ?>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Opens', 'anderson-qr-code-generator' ); ?></th>
+				<td>
+					<fieldset class="csqr-kind-choice">
+						<legend class="screen-reader-text"><?php esc_html_e( 'What the code opens', 'anderson-qr-code-generator' ); ?></legend>
+						<?php foreach ( $kinds as $value => $label ) : ?>
+							<label><input type="radio" name="csqr[kind]" value="<?php echo esc_attr( $value ); ?>" <?php checked( $kind, $value ); ?> /> <?php echo esc_html( $label ); ?></label>
+						<?php endforeach; ?>
+					</fieldset>
+				</td>
+			</tr>
+		<?php endif; ?>
+		<tr data-csqr-for="url">
 			<th scope="row"><label for="csqr-destination"><?php esc_html_e( 'Destination', 'anderson-qr-code-generator' ); ?></label></th>
 			<td>
-				<input type="url" id="csqr-destination" name="csqr_destination" class="large-text" required value="<?php echo esc_attr( $dest ); ?>" placeholder="https://" />
+				<input type="url" id="csqr-destination" name="csqr_destination" class="large-text" value="<?php echo esc_attr( $dest ); ?>" placeholder="https://" />
 				<p class="description"><?php esc_html_e( 'Change this any time. Printed codes follow it automatically.', 'anderson-qr-code-generator' ); ?></p>
 			</td>
 		</tr>
+		<?php do_action( 'csqr_link_fields', $post ); ?>
 		<tr>
 			<th scope="row"><label for="csqr-slug"><?php esc_html_e( 'Short address', 'anderson-qr-code-generator' ); ?></label></th>
 			<td>
@@ -280,7 +530,8 @@ function csqr_link_code_box( $post ) {
 }
 
 /**
- * Save the destination and address.
+ * Save the edit screen. The form posts csqr_destination, csqr_slug and
+ * csqr[field] for every other schema field.
  *
  * @param int     $post_id Post id.
  * @param WP_Post $post    Post.
@@ -296,6 +547,20 @@ function csqr_link_save( $post_id, $post ) {
 	$dest = isset( $_POST['csqr_destination'] ) ? esc_url_raw( wp_unslash( $_POST['csqr_destination'] ), array( 'http', 'https' ) ) : '';
 	update_post_meta( $post_id, '_csqr_destination', $dest );
 
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each field is sanitized by its schema below.
+	$posted = isset( $_POST['csqr'] ) && is_array( $_POST['csqr'] ) ? wp_unslash( $_POST['csqr'] ) : array();
+	foreach ( csqr_link_schema() as $key => $field ) {
+		if ( 'destination' === $key ) {
+			continue;
+		}
+		if ( array_key_exists( $key, $posted ) ) {
+			update_post_meta( $post_id, $field['meta'], csqr_link_sanitize_field( $field, $posted[ $key ] ) );
+		} elseif ( 'bool' === $field['type'] || 'array' === $field['type'] ) {
+			// Unchecked boxes and emptied lists aren't posted.
+			update_post_meta( $post_id, $field['meta'], 'bool' === $field['type'] ? false : array() );
+		}
+	}
+
 	$slug = isset( $_POST['csqr_slug'] ) ? sanitize_title( wp_unslash( $_POST['csqr_slug'] ) ) : '';
 	if ( '' === $slug ) {
 		$slug = sanitize_title( $post->post_title );
@@ -310,11 +575,13 @@ function csqr_link_save( $post_id, $post ) {
 		);
 		add_action( 'save_post_' . CSQR_LINK_TYPE, 'csqr_link_save', 10, 2 );
 	}
+	do_action( 'csqr_link_saved', $post_id, $posted );
 }
 add_action( 'save_post_' . CSQR_LINK_TYPE, 'csqr_link_save', 10, 2 );
 
 /**
- * Short links can't be saved without a destination: keep them drafts.
+ * Web-address short links can't be published without a destination: keep
+ * them drafts. Contact cards don't need one.
  *
  * @param array<string, mixed> $data    Post data.
  * @param array<string, mixed> $postarr Raw post data.
@@ -325,14 +592,15 @@ function csqr_link_require_destination( $data, $postarr ) {
 		return $data;
 	}
 	$from_form = isset( $_POST['csqr_destination'], $_POST['csqr_link_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['csqr_link_nonce'] ) ), 'csqr_link_save' );
+	$id        = ! empty( $postarr['ID'] ) ? (int) $postarr['ID'] : 0;
 	if ( $from_form ) {
 		$dest = esc_url_raw( wp_unslash( $_POST['csqr_destination'] ), array( 'http', 'https' ) );
-	} elseif ( ! empty( $postarr['meta_input']['_csqr_destination'] ) ) {
-		$dest = esc_url_raw( $postarr['meta_input']['_csqr_destination'], array( 'http', 'https' ) );
+		$kind = isset( $_POST['csqr']['kind'] ) ? sanitize_key( wp_unslash( $_POST['csqr']['kind'] ) ) : ( $id ? csqr_link_kind( $id ) : 'url' );
 	} else {
-		$dest = ! empty( $postarr['ID'] ) ? csqr_link_destination( (int) $postarr['ID'] ) : '';
+		$dest = ! empty( $postarr['meta_input']['_csqr_destination'] ) ? esc_url_raw( $postarr['meta_input']['_csqr_destination'], array( 'http', 'https' ) ) : ( $id ? csqr_link_destination( $id ) : '' );
+		$kind = ! empty( $postarr['meta_input']['_csqr_kind'] ) ? (string) $postarr['meta_input']['_csqr_kind'] : ( $id ? csqr_link_kind( $id ) : 'url' );
 	}
-	if ( '' === $dest ) {
+	if ( '' === $dest && 'url' === $kind ) {
 		$data['post_status'] = 'draft';
 	}
 	return $data;
@@ -373,6 +641,10 @@ function csqr_link_column( $column, $post_id ) {
 			}
 			break;
 		case 'csqr_dest':
+			if ( 'contact' === csqr_link_kind( $post_id ) ) {
+				echo esc_html__( 'Contact card', 'anderson-qr-code-generator' );
+				break;
+			}
 			$dest = csqr_link_destination( $post_id );
 			echo $dest ? '<a href="' . esc_url( $dest ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( preg_replace( '#^https?://(www\.)?#', '', $dest ) ) . '</a>' : '<em>' . esc_html__( 'Not set', 'anderson-qr-code-generator' ) . '</em>';
 			break;

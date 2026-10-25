@@ -255,6 +255,41 @@ async function shot(page, name) {
 	ok(missing.status() === 404, 'unknown short link is a 404');
 
 	/* ---------------------------------------------------------------- */
+	console.log('== Smarter short links');
+	const BASEU = new URL(fixtures.lunchUrl).origin;
+	const desk = { 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/130 Safari/537.36' };
+	const go = (path, headers) => page.request.get(BASEU + path, { maxRedirects: 0, headers: headers || desk });
+	let r = await go('/qr/lunch/');
+	ok(r.status() === 302 && r.headers().location === 'https://example.com/lunch', 'desktop scan goes to the destination', r.headers().location);
+	r = await go('/qr/lunch/', { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148' });
+	ok(r.headers().location === 'https://apps.apple.com/app/id1', 'iPhone scan goes to the App Store link', r.headers().location);
+	r = await go('/qr/lunch/', { 'User-Agent': 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/130 Mobile Safari/537.36' });
+	ok(r.headers().location === 'https://play.google.com/store/apps/details?id=x', 'Android scan goes to the Play link', r.headers().location);
+	r = await go('/qr/lunch/front-window/');
+	ok(r.status() === 302 && r.headers().location === 'https://example.com/lunch', 'a spot\'s code goes to the same place', r.status());
+	r = await go('/qr/happy/');
+	ok(r.headers().location === 'https://example.com/scheduled', 'a schedule rule changes the destination', r.headers().location);
+	r = await go('/qr/fall-offer/');
+	ok(r.status() === 410 && (await r.text()).includes('Our fall offer has ended.'), 'after the end date, people see the message', r.status());
+	r = await go('/qr/card/');
+	const vcf = await r.text();
+	ok(r.status() === 200 && /text\/vcard/.test(r.headers()['content-type']) && vcf.includes('FN:Jeremy Anderson') && vcf.includes('TEL;TYPE=CELL:+1 508 555 0100'), 'contact link serves a contact card', r.headers()['content-type']);
+
+	console.log('== Codes from other QR plugins');
+	await page.goto(fixtures.compat);
+	await page.waitForFunction(() => document.querySelectorAll('.csqr-card canvas').length === 2);
+	ok((await decode(page, '.csqr-card:nth-of-type(1) .csqr-sheet__code')) === 'https://example.com/kaya' || (await page.evaluate(() => document.querySelectorAll('.csqr-card')[0].getAttribute('data-csqr-text'))) === 'https://example.com/kaya', '[kaya_qrcode] is drawn');
+	ok((await page.evaluate(() => document.querySelectorAll('.csqr-card')[1].getAttribute('data-csqr-text'))) === 'https://example.com/su' && /SU code/.test(await page.evaluate(() => document.querySelectorAll('.csqr-card')[1].textContent)), '[su_qrcode] is drawn with its title');
+
+	if (fixtures.product) {
+		console.log('== WooCommerce product');
+		await page.goto(fixtures.productUrl);
+		await page.waitForSelector('.product_meta .csqr-page-qr canvas, .product_meta ~ .csqr-page-qr canvas, .csqr-page-qr canvas', { timeout: 15000 });
+		ok((await decode(page, '.csqr-page-qr .csqr-sheet__code')) === fixtures.productUrl, 'product page shows its code');
+		ok((await page.$$('.csqr-page-qr')).length === 1, 'only one code on the product page', (await page.$$('.csqr-page-qr')).length);
+	}
+
+	/* ---------------------------------------------------------------- */
 	console.log('== Admin');
 	await page.goto(BASE + '/wp-login.php');
 	await page.fill('#user_login', USER);
@@ -304,6 +339,97 @@ async function shot(page, name) {
 	await page.selectOption('#csqr-b-kind', 'link');
 	await page.selectOption('#csqr-b-style', 'brand-blue');
 	ok((await page.inputValue('#csqr-b-output')) === '[qr_code link="menu" style="brand-blue"]', 'builder writes the shortcode', await page.inputValue('#csqr-b-output'));
+
+	/* ---------------------------------------------------------------- */
+	console.log('== Scan history and spots');
+	await page.goto(BASE + '/wp-admin/post.php?post=' + fixtures.lunch + '&action=edit');
+	await page.waitForSelector('#csqr-link-history');
+	ok(await page.$('#csqr-link-history .csqr-history__chart'), 'link screen charts the scans');
+	ok(/[1-9]/.test(await page.$eval('#csqr-link-history .csqr-history__total strong', (n) => n.textContent)), 'chart counts today\'s scans');
+	const spotRows = await page.$$eval('.csqr-places__table tbody tr', (rows) => rows.map((tr) => [tr.querySelector('th').textContent.trim().split('\n')[0], tr.querySelector('.csqr-places__n').textContent.trim()]));
+	const windowRow = spotRows.find((row) => /Front window/.test(row[0]));
+	ok(windowRow && windowRow[1] === '1', 'a spot\'s scans are counted separately', spotRows);
+	ok(await page.isHidden('#csqr-contact-firstname'), 'contact fields are hidden for a web-address link');
+	await page.check('input[name="csqr[kind]"][value="contact"]');
+	ok(await page.isVisible('#csqr-contact-firstname') && await page.isHidden('#csqr-destination'), 'choosing "Contact card" swaps the fields');
+	await page.check('input[name="csqr[kind]"][value="url"]');
+	// Change a rule and an end date from the screen, then check the redirect.
+	await page.fill('input[name="csqr[schedule][0][url]"]', 'https://example.com/from-screen');
+	await page.fill('input[name="csqr[placements][new][name]"]', 'Takeout bag');
+	await Promise.all([page.waitForNavigation(), page.click('#publish')]);
+	r = await go('/qr/lunch/');
+	ok(r.headers().location === 'https://example.com/from-screen', 'a rule added on the screen takes effect', r.headers().location);
+	ok(await page.$$eval('.csqr-places__item input[type="text"]', (ns) => ns.map((n) => n.value).includes('Takeout bag')), 'a new spot is saved');
+
+	console.log('== REST API');
+	const nonce = await (await page.request.get(BASE + '/wp-admin/admin-ajax.php?action=rest-nonce')).text();
+	const api = (method, path, data) => page.request.fetch(BASE + '/wp-json/anderson-qr/v1' + path, { method, headers: { 'X-WP-Nonce': nonce }, data });
+	let res = await api('POST', '/links', { name: 'From the API', destination: 'https://example.com/api', placements: 'Poster' });
+	const made = await res.json();
+	ok(res.status() === 201 && made.slug === 'from-the-api' && made.placements.length === 1, 'API creates a link', res.status());
+	res = await api('POST', '/links', { name: 'From the API', destination: 'https://example.com/api' });
+	ok(res.status() === 409, 'API refuses a short address that\'s taken', res.status());
+	res = await api('PATCH', '/links/' + made.id, { destination: 'https://example.com/api-2' });
+	ok((await res.json()).destination === 'https://example.com/api-2', 'API updates a link');
+	res = await api('GET', '/links/' + fixtures.lunch + '/stats?days=7');
+	const stats = await res.json();
+	ok(res.status() === 200 && Object.keys(stats.days).length === 7 && stats.in_period >= 1, 'API reports daily scans', stats.in_period);
+	res = await api('DELETE', '/links/' + made.id);
+	ok((await res.json()).trashed === true, 'API trashes a link');
+	res = await page.request.get(BASE + '/wp-json/anderson-qr/v1/links', { headers: { 'X-WP-Nonce': 'nope' } });
+	ok(res.status() === 401 || res.status() === 403, 'API needs a logged-in admin', res.status());
+
+	console.log('== Bulk create and print');
+	await page.goto(BASE + '/wp-admin/admin.php?page=csqr-bulk');
+	await page.fill('#csqr-rows', 'name,destination,placements\nBrunch menu,https://example.com/brunch,"Patio, Bar"\nWine list,https://example.com/wine,\nNo address,,');
+	await Promise.all([page.waitForNavigation(), page.click('.csqr-bulk__form [type="submit"]')]);
+	const note = await page.textContent('.csqr-bulk__results');
+	ok(/2 created/.test(note) && /1 with a problem/.test(note), 'bulk create makes the good rows and reports the bad one', note.replace(/\s+/g, ' ').trim());
+	await Promise.all([page.waitForNavigation(), page.click('.csqr-bulk__results .button-primary')]);
+	await page.waitForFunction(() => document.querySelectorAll('.csqr-print__code svg').length >= 4, null, { timeout: 20000 });
+	const printed = await page.evaluate(async () => {
+		const jsQR = await window.CSQR.loadDecoder();
+		const out = [];
+		for (const box of document.querySelectorAll('.csqr-print__code')) {
+			const img = new Image();
+			await new Promise((done) => {
+				img.onload = done;
+				img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(box.querySelector('svg').outerHTML.replace('<svg', '<svg width="400" height="400"'));
+			});
+			const c = document.createElement('canvas');
+			c.width = c.height = 400;
+			const x = c.getContext('2d');
+			x.fillStyle = '#fff';
+			x.fillRect(0, 0, 400, 400);
+			x.drawImage(img, 0, 0, 400, 400);
+			const found = jsQR(x.getImageData(0, 0, 400, 400).data, 400, 400);
+			out.push(found ? found.data : null);
+		}
+		return out;
+	});
+	ok(printed.length === 4 && printed.every((t) => /\/qr\/(brunch-menu|wine-list)\//.test(t || '')), 'every code on the print sheet decodes (each spot included)', printed);
+	ok(printed.some((t) => /\/qr\/brunch-menu\/patio\/$/.test(t || '')), 'spots get their own codes on the sheet', printed);
+	await shot(page, 'print-grid');
+	await page.selectOption('[data-csqr-print-layout]', 'tent');
+	ok((await page.$$('.csqr-print__page')).length === 4, 'table tents: one page per code', (await page.$$('.csqr-print__page')).length);
+	const [zip] = await Promise.all([page.waitForEvent('download'), page.click('[data-csqr-print-zip]')]);
+	const zipBuf = fs.readFileSync(await zip.path());
+	ok(zipBuf.readUInt32LE(0) === 0x04034b50 && zipBuf.includes(Buffer.from('qr-brunch-menu-patio.svg')) && zipBuf.includes(Buffer.from('qr-wine-list.png')), 'zip holds a PNG and an SVG per code');
+
+	const [csv] = await Promise.all([page.waitForEvent('download'), page.goto(BASE + '/wp-admin/admin.php?page=csqr-bulk').then(() => page.click('text=Download spreadsheet'))]);
+	const csvText = fs.readFileSync(await csv.path(), 'utf8');
+	ok(csvText.startsWith('name,slug,url,destination') && csvText.includes('Brunch menu') && csvText.includes('"Patio, Bar"'), 'export downloads every link as a spreadsheet');
+
+	if (fixtures.product) {
+		console.log('== WooCommerce labels');
+		await page.goto(BASE + '/wp-admin/admin.php?page=csqr-print&source=products&ids=' + fixtures.product);
+		await page.waitForSelector('.csqr-print__code svg');
+		const label = await page.textContent('.csqr-print__cell');
+		ok(/Espresso beans/.test(label) && /12[.,]50/.test(label) && /BEANS-1/.test(label), 'product label shows name, price and SKU', label.replace(/\s+/g, ' ').trim());
+	}
+
+	await page.goto(BASE + '/wp-admin/admin.php?page=csqr-settings');
+	ok(/kaya_qrcode/.test(await page.textContent('#wpbody-content')), 'settings list the old plugin shortcodes in use');
 
 	/* ---------------------------------------------------------------- */
 	console.log('== Block editor');

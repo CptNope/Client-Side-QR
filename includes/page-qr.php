@@ -82,6 +82,20 @@ function csqr_append_page_qr( $content ) {
 	if ( ! $post_id || ! csqr_page_qr_enabled( $post_id ) || has_block( 'csqr/code', $post_id ) ) {
 		return $content;
 	}
+	// WooCommerce products show it beside the product details instead.
+	if ( ! apply_filters( 'csqr_page_qr_in_content', true, $post_id ) ) {
+		return $content;
+	}
+	return $content . csqr_page_qr_card( $post_id );
+}
+
+/**
+ * The page's QR card.
+ *
+ * @param int $post_id Post id.
+ * @return string HTML.
+ */
+function csqr_page_qr_card( $post_id ) {
 	$settings = csqr_get_settings();
 	$caption  = '' !== $settings['pageQrCaption'] ? $settings['pageQrCaption'] : csqr_default_caption( 'page' );
 	$design   = wp_parse_args( array( 'qrSize' => 160 ), csqr_card_design( array() ) );
@@ -96,7 +110,7 @@ function csqr_append_page_qr( $content ) {
 			'class'     => 'csqr-card--page',
 		)
 	);
-	return $content . '<div class="csqr-page-qr">' . $card . '</div>';
+	return '<div class="csqr-page-qr">' . $card . '</div>';
 }
 add_filter( 'the_content', 'csqr_append_page_qr', 20 );
 
