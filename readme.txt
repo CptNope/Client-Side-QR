@@ -1,10 +1,10 @@
 === Anderson QR Code Generator ===
 Contributors: cptnope
-Tags: qr code, qr generator, short links, wifi, vcard
+Tags: qr code, qr generator, short links, woocommerce, print
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 4.3.0
+Stable tag: 4.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,6 +18,13 @@ Anderson QR Code Generator makes QR codes inside WordPress without sending anyth
 
 - **Scan check.** Every code is decoded right after it's drawn. You see "Scans correctly", or what's wrong (low contrast, inverted colors, a logo that's too big) with a one-click fix.
 - **Short links you can change later.** Make a link like `yoursite.com/qr/menu`, print its code, and point it somewhere new whenever you like. Scans are counted on your own site, with no cookies and no outside service.
+- **Scan history and spots.** See scans per day, and print one link in several spots (window, flyer, table card) to see which gets scanned most.
+- **Links that change by themselves.** Send scans somewhere else at lunchtime or on weekends, to the App Store on iPhone and Google Play on Android, or to an "offer ended" message after a date.
+- **Contact cards that stay small.** A contact code that holds only a short address, so it scans easily, saves with a photo and can be updated after printing.
+- **Bulk create and print sheets.** Make dozens of short links from a spreadsheet, then print all their codes as a grid to cut out, table tents or name badges, or download them all as a zip.
+- **WooCommerce.** A code on each product page, printable shelf labels with name, price and SKU, and thank-you cards for an order's box that link to each product's reviews.
+- **Moving from another QR plugin?** Codes from Kaya QR Code Generator and Shortcodes Ultimate keep working after you switch that plugin off.
+- **REST API and WP-CLI** for agencies managing links across many sites.
 - **A QR code for every page.** Turn it on for posts, pages or products and each one gets its own code, or switch it per page from the editor.
 - **Print-ready downloads.** Pick a printed size (2 to 20 cm, or inches) and get a 300 dpi PNG, an SVG at that physical size, or a PDF. The plugin tells you how far away it will scan from.
 - **Logos from the Media Library**, with error correction and logo size set automatically so the code still scans.
@@ -69,7 +76,23 @@ Yes, if you made it from a short link (`QR Codes > Short links`). The code point
 
 = Do short links count scans? =
 
-Yes: a total and the last scan time, stored on your site. Link previews and search bots aren't counted.
+Yes: a total, a count per day and per spot, and the last scan time, stored on your site. Nothing about the person scanning is stored, and link previews and search bots aren't counted.
+
+= Can a code go somewhere different at different times? =
+
+Yes. On a short link, add rules under "Change where it goes automatically": by day and time (in your site's time zone), by phone (iPhone or Android), and an end date after which it goes to another address or shows a message.
+
+= How do I print many codes at once? =
+
+Choose short links in `QR Codes > Short links` (or products in WooCommerce), pick "Print QR codes" from Bulk actions, and choose a layout and paper size. Print at 100% so the codes come out the size shown. `QR Codes > Bulk create` makes the links from a spreadsheet first.
+
+= I used another QR plugin. Do I have to redo my pages? =
+
+Not for Kaya QR Code Generator (`[kaya_qrcode]`) or Shortcodes Ultimate (`[su_qrcode]`). Switch the old plugin off and this one draws those codes with your default design. `QR Codes > Settings` lists where they're used.
+
+= Is there an API? =
+
+Yes: `wp qr link` and `wp qr import` on the command line, and REST routes under `/wp-json/anderson-qr/v1/links` for administrators (use an Application Password from outside the site).
 
 = What size should I print? =
 
@@ -89,8 +112,22 @@ The generator and code cards use your theme's font and colors by default. You ca
 2. The QR code block in the editor, with design controls and the scan check
 3. A short link: change where it goes and see how often it's scanned
 4. Settings with a live preview that checks the code as you change it
+5. Scan history per day and per spot, with a code for each spot
+6. A print sheet of codes, ready to cut out
 
 == Changelog ==
+
+= 4.4.0 =
+
+- Scan history: scans per day for each short link, with a chart and a table view.
+- Spots: print one short link in several places, each with its own code and count.
+- Rules: different destinations by day and time, separate iPhone and Android destinations, and an end date with a message or a new address.
+- Contact-card short links that serve a contact file with a photo.
+- Bulk create short links from a spreadsheet, export them all, and print sheets of codes (grid, table tents, name badges) or download them as a zip.
+- WooCommerce: product page codes, shelf labels and order thank-you cards.
+- Kaya QR Code Generator and Shortcodes Ultimate shortcodes keep working after switching.
+- REST API and WP-CLI commands for short links.
+- Fixed: codes drawn as SVG side by side could borrow each other's corner shapes.
 
 = 4.3.0 =
 
@@ -154,6 +191,10 @@ The generator and code cards use your theme's font and colors by default. You ca
 - Added per-block payload type toggles.
 
 == Upgrade Notice ==
+
+= 4.4.0 =
+
+Adds scan history, spots, time and phone rules, contact-card links, bulk print sheets, WooCommerce labels, imports from other QR plugins, and a REST API and WP-CLI commands.
 
 = 4.3.0 =
 

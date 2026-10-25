@@ -3,7 +3,7 @@
  * Plugin Name:       Anderson QR Code Generator
  * Plugin URI:        https://github.com/CptNope/Client-Side-QR
  * Description:       Generate privacy-friendly QR codes in the browser with a Gutenberg block and shortcode for campaigns, contact sharing, payments, and QR-driven site workflows.
- * Version:           4.3.0
+ * Version:           4.4.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Jeremy Anderson
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CSQR_VERSION', '4.3.0' );
+define( 'CSQR_VERSION', '4.4.0' );
 define( 'CSQR_OPTION_NAME', 'csqr_settings' );
 define( 'CSQR_RELEASE_TRANSIENT', 'csqr_github_release_data' );
 define( 'CSQR_RELEASE_CRON_HOOK', 'csqr_check_github_release_event' );

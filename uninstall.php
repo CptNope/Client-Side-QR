@@ -22,7 +22,7 @@ delete_option( 'csqr_flush_rewrite' );
 $csqr_links = get_posts(
 	array(
 		'post_type'      => 'csqr_link',
-		'post_status'    => 'any',
+		'post_status'    => array_keys( get_post_stati() ), // "any" skips the trash.
 		'posts_per_page' => -1,
 		'fields'         => 'ids',
 		'no_found_rows'  => true,
@@ -33,3 +33,6 @@ foreach ( $csqr_links as $csqr_link_id ) {
 }
 
 delete_post_meta_by_key( '_csqr_page_qr' );
+
+// Short-link history, spots, rules and contact cards are post meta of the
+// links above, so they went with them.

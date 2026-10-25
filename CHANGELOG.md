@@ -2,6 +2,22 @@
 
 All notable changes to Anderson QR Code Generator (formerly Client-Side QR Code Generator) will be documented in this file.
 
+## [4.4.0] - Smarter Links, Print Sheets And WooCommerce
+### Added
+- **Scan history** (`includes/link-stats.php`): daily counts per short link (kept 400 days, numbers only), shown as a bar chart with a table view, and a weekly count in the links list.
+- **Spots**: one link printed in several places (`/qr/menu/window`), each with its own code and count.
+- **Rules** (`includes/link-rules.php`): destinations by day and time in the site's time zone, iPhone and Android destinations, and an end date with a message (HTTP 410) or a new address.
+- **Contact-card links** (`includes/link-contact.php`): serve a vCard 3.0 file with an optional photo from the Media Library.
+- **Bulk create, export and print sheets** (`includes/bulk.php`, `assets/qr-print.js`): CSV import (commas, semicolons or tabs), CSV export, and print sheets on Letter or A4 (grid with cut marks, table tents, name badges) plus a zip of PNG and SVG files. "Print QR codes" bulk action on short links.
+- **WooCommerce** (`includes/woocommerce.php`): code with the product details, "Print QR labels" bulk action (name, price, SKU), and order thank-you cards linking to each product's reviews.
+- **Imports from other plugins** (`includes/compat.php`): `[kaya_qrcode]`, `[kaya_qrcode_dynamic]` and `[su_qrcode]` are drawn when their plugins are inactive; the settings page lists where they're used.
+- **REST API** (`anderson-qr/v1/links`) and **WP-CLI** (`wp qr link list|create|update|get|stats|delete`, `wp qr import`).
+- A link data model (`csqr_get_link()`, `csqr_save_link()`, the `csqr_link_schema` and `csqr_link_target` filters) that the screens, importer, API and CLI share.
+
+### Fixed
+- Several inline SVG codes on one page shared the library's clip-path ids, so later codes drew with the first code's corner shapes.
+- Uninstall also removes short links in the trash.
+
 ## [4.3.0] - Scan Check, Short Links And A Redesign
 ### Added
 - **QR code block** (`csqr/code`) with variations for this page, guest WiFi, a contact card (filled in from your profile), a review link and short links; also `[qr_code]`.
