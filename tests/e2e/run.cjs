@@ -422,7 +422,7 @@ async function shot(page, name) {
 
 	if (fixtures.product) {
 		console.log('== WooCommerce labels');
-		await page.goto(BASE + '/wp-admin/admin.php?page=csqr-print&source=products&ids=' + fixtures.product);
+		await page.goto(BASE + '/wp-admin/admin.php?page=csqr-print&source=products&layout=grid&ids=' + fixtures.product);
 		await page.waitForSelector('.csqr-print__code svg');
 		const label = await page.textContent('.csqr-print__cell');
 		ok(/Espresso beans/.test(label) && /12[.,]50/.test(label) && /BEANS-1/.test(label), 'product label shows name, price and SKU', label.replace(/\s+/g, ' ').trim());
