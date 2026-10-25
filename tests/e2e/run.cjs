@@ -522,6 +522,9 @@ async function shot(page, name) {
 	ok(errors.length === 0, 'no JavaScript errors', errors);
 
 	console.log(`\n${pass} passed, ${fail} failed`);
+	if (process.env.GITHUB_ACTIONS) {
+		console.log(`::notice title=Browser tests::${pass} passed, ${fail} failed; WooCommerce checks ${fixtures.product ? 'ran' : 'skipped (WooCommerce not active)'}`);
+	}
 	await browser.close();
 	process.exit(fail ? 1 : 0);
 })().catch((e) => {
