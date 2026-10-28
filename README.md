@@ -182,3 +182,7 @@ Bundled third-party dependencies may use their own compatible licenses. Attribut
 ## Changelog
 
 See `CHANGELOG.md`.
+
+---
+
+Built by [Jeremy Anderson Tech](https://jeremyanderson.tech/), a web development and security practice in Shrewsbury, MA. [Services](https://jeremyanderson.tech/services/)
