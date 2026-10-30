@@ -524,3 +524,7 @@ GPL-2.0-or-later. Bundled third-party libraries keep their own compatible licens
 ## Changelog
 
 See [`CHANGELOG.md`](CHANGELOG.md).
+
+---
+
+Built by [Jeremy Anderson Tech](https://jeremyanderson.tech/), a web development and security practice in Shrewsbury, MA. [Services](https://jeremyanderson.tech/services/)
